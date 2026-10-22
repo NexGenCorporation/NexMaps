@@ -49,12 +49,6 @@
         scroll-behavior: auto !important;
       }
 
-      body.ui-compact .menu-card,
-      body.ui-compact .settings-card,
-      body.ui-compact .site-card {
-        padding: 12px 12px 14px;
-      }
-
       #map {
         position: fixed;
         inset: 0;
@@ -86,6 +80,43 @@
         background: rgba(10, 18, 24, 0.74);
         color: var(--text);
         border-color: rgba(255,255,255,0.08);
+      }
+
+      .user-marker {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        filter: drop-shadow(0 6px 10px rgba(0, 223, 137, 0.42));
+        transform: rotate(0deg);
+        transition: transform 0.18s ease-out;
+      }
+
+      .user-marker::before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: linear-gradient(180deg, #5be9a7, #18a8f5);
+        border: 3px solid rgba(255,255,255,0.9);
+        border-radius: 50%;
+        box-shadow: 0 0 0 6px rgba(16, 196, 122, 0.14);
+      }
+
+      .user-marker::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 18px solid #00df89;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 0 8px rgba(0, 223, 137, 0.6));
       }
 
       .menu-toggle {
@@ -363,6 +394,16 @@
         outline: none;
       }
 
+      .mode-summary {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(0,223,137,0.08);
+        border: 1px solid rgba(0,223,137,0.18);
+        color: #dffef4;
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
       .about-body {
         color: var(--muted);
         line-height: 1.6;
@@ -393,6 +434,20 @@
         height: 28px;
         display: block;
         filter: drop-shadow(0 4px 10px rgba(0,223,137,0.24));
+      }
+
+      .route-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(0,112,243,0.1);
+        border: 1px solid rgba(0,112,243,0.18);
+        color: #dfeeff;
+        font-weight: 700;
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
       }
 
       @media (max-width: 640px) {
@@ -452,6 +507,18 @@
           <span class="panel-label">Preferences</span>
 
           <div class="setting-row">
+            <label for="modeSelect">Access Mode</label>
+          </div>
+          <select id="modeSelect">
+            <option value="guest">Guest mode</option>
+            <option value="simple">Simple mode</option>
+            <option value="normal">Normal mode</option>
+            <option value="advanced">Advanced/Contributor mode</option>
+          </select>
+
+          <div id="modeSummary" class="mode-summary"></div>
+
+          <div class="setting-row">
             <label for="animationsToggle">Animations</label>
             <button id="animationsToggle" class="toggle-control on" type="button" aria-label="Toggle animations"></button>
           </div>
@@ -465,6 +532,17 @@
           </select>
 
           <div class="setting-row">
+            <label for="routingSelect">Routing Algorithm</label>
+          </div>
+          <select id="routingSelect">
+            <option value="fastest">Fastest Route</option>
+            <option value="shortest">Shortest Route</option>
+            <option value="eco">Eco Route</option>
+            <option value="scenic">Most Scenic</option>
+            <option value="noHighways">Avoid Highways</option>
+          </select>
+
+          <div class="setting-row">
             <label for="uiModeSelect">UI Settings</label>
           </div>
           <select id="uiModeSelect">
@@ -472,6 +550,8 @@
             <option value="compact">Compact View</option>
             <option value="glass">Glass UI</option>
           </select>
+
+          <div class="route-badge" id="routeBadge">Fastest Route</div>
         </div>
       </section>
 
@@ -479,7 +559,7 @@
         <div class="menu-card">
           <span class="panel-label">About</span>
           <div class="about-body">
-            NexMaps is built for fast navigation, location awareness, and a clean map-first experience. This app focuses on a streamlined interface with quick access to map settings and nearby location tools.
+            NexMaps is a map-first experience for fast navigation, precision location awareness, and clean UI controls. It remembers your recent map state and preferences so the app feels consistent from visit to visit.
           </div>
         </div>
       </section>
@@ -491,6 +571,16 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+      const STORAGE_KEY = 'nexmaps_state_v1';
+      const state = {
+        mode: 'guest',
+        animations: true,
+        imagery: 'normal',
+        uiMode: 'standard',
+        routing: 'fastest',
+        activePage: 'websites'
+      };
+
       const sidebar = document.getElementById('sidebar');
       const menuToggle = document.getElementById('menuToggle');
       const navButtons = document.querySelectorAll('.nav-item');
@@ -498,7 +588,147 @@
       const animationsToggle = document.getElementById('animationsToggle');
       const imagerySelect = document.getElementById('imagerySelect');
       const uiModeSelect = document.getElementById('uiModeSelect');
+      const routingSelect = document.getElementById('routingSelect');
+      const modeSelect = document.getElementById('modeSelect');
+      const modeSummary = document.getElementById('modeSummary');
+      const routeBadge = document.getElementById('routeBadge');
       const locateBtn = document.getElementById('locateBtn');
+
+      const modeDescriptions = {
+        guest: 'Guest mode keeps the experience minimal: map view + location tracking only.',
+        simple: 'Simple mode adds a signed-in OpenStreetMap profile and lightweight route prompts.',
+        normal: 'Normal mode includes OpenStreetMap account syncing and navigation tools.',
+        advanced: 'Advanced/Contributor mode unlocks routing, contribution tools, and full feature access.'
+      };
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          Object.assign(state, saved);
+        } catch (error) {
+          console.warn('Could not load NexMaps state', error);
+        }
+      }
+
+      function saveState() {
+        const serializable = {
+          ...state,
+          mapCenter: map ? map.getCenter() : undefined,
+          mapZoom: map ? map.getZoom() : undefined
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+      }
+
+      function applyAccessMode() {
+        const mode = state.mode || 'guest';
+        const modeLabel = mode.charAt(0).toUpperCase() + mode.slice(1);
+        modeSelect.value = mode;
+        modeSummary.textContent = modeDescriptions[mode] || modeDescriptions.guest;
+        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
+        document.body.dataset.mode = mode;
+        document.body.classList.toggle('guest-mode', mode === 'guest');
+        document.body.classList.toggle('simple-mode', mode === 'simple');
+        document.body.classList.toggle('normal-mode', mode === 'normal');
+        document.body.classList.toggle('advanced-mode', mode === 'advanced');
+        const isGuest = mode === 'guest';
+        const isSimple = mode === 'simple';
+        const isNormal = mode === 'normal';
+        const isAdvanced = mode === 'advanced';
+
+        if (!isGuest && !isSimple && !isNormal && !isAdvanced) {
+          // no-op, default guest route
+        }
+
+        const menuButtons = document.querySelectorAll('.nav-item');
+        menuButtons.forEach((btn) => {
+          const enabledModes = {
+            websites: ['guest','simple','normal','advanced'],
+            settings: ['guest','simple','normal','advanced'],
+            about: ['guest','simple','normal','advanced']
+          };
+          const allowed = enabledModes[btn.dataset.page] || [];
+          btn.disabled = !allowed.includes(mode);
+          btn.style.opacity = btn.disabled ? '0.45' : '1';
+          btn.style.cursor = btn.disabled ? 'default' : 'pointer';
+        });
+
+        const navigationFeatures = ['routingSelect', 'modeSelect', 'imagerySelect', 'uiModeSelect'];
+        navigationFeatures.forEach((id) => {
+          const item = document.getElementById(id);
+          if (!item) return;
+          const allow = id === 'modeSelect' || id === 'imagerySelect' || id === 'uiModeSelect' || mode !== 'guest';
+          item.disabled = !allow;
+          item.style.opacity = allow ? '1' : '0.5';
+        });
+
+        document.querySelectorAll('.mode-summary').forEach((node) => {
+          node.textContent = `${modeLabel} mode: ${modeDescriptions[mode]}`;
+        });
+      }
+
+      function applyAnimations() {
+        document.body.classList.toggle('animations-off', !state.animations);
+        animationsToggle.classList.toggle('on', state.animations);
+      }
+
+      function applyImagery() {
+        imagerySelect.value = state.imagery || 'normal';
+        if (state.imagery === 'satellite') {
+          setSatelliteMap();
+        } else {
+          setNormalMap();
+        }
+      }
+
+      function applyUiMode() {
+        uiModeSelect.value = state.uiMode || 'standard';
+        document.body.classList.toggle('ui-compact', state.uiMode === 'compact');
+      }
+
+      function applyRouting() {
+        routingSelect.value = state.routing || 'fastest';
+        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
+      }
+
+      function applyActivePage() {
+        navButtons.forEach((btn) => {
+          const isActive = btn.dataset.page === state.activePage;
+          btn.classList.toggle('active', isActive);
+        });
+        panels.forEach((panel) => {
+          panel.classList.toggle('active', panel.dataset.panel === state.activePage);
+        });
+      }
+
+      function setSatelliteMap() {
+        if (!window.satelliteLayer) {
+          window.satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: 'Tiles &copy; Esri'
+          });
+        }
+        if (window.normalLayer && map.hasLayer(window.normalLayer)) {
+          map.removeLayer(window.normalLayer);
+        }
+        if (!map.hasLayer(window.satelliteLayer)) {
+          window.satelliteLayer.addTo(map);
+        }
+      }
+
+      function setNormalMap() {
+        if (!window.normalLayer) {
+          window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+          });
+        }
+        if (window.satelliteLayer && map.hasLayer(window.satelliteLayer)) {
+          map.removeLayer(window.satelliteLayer);
+        }
+        if (!map.hasLayer(window.normalLayer)) {
+          window.normalLayer.addTo(map);
+        }
+      }
 
       menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('open');
@@ -506,65 +736,103 @@
 
       navButtons.forEach((button) => {
         button.addEventListener('click', () => {
+          if (button.disabled) return;
           navButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
           const page = button.dataset.page;
+          state.activePage = page;
           panels.forEach((panel) => {
             panel.classList.toggle('active', panel.dataset.panel === page);
           });
+          saveState();
         });
       });
 
       animationsToggle.addEventListener('click', () => {
-        const on = animationsToggle.classList.toggle('on');
-        document.body.classList.toggle('animations-off', !on);
+        state.animations = !state.animations;
+        applyAnimations();
+        saveState();
       });
 
       imagerySelect.addEventListener('change', (event) => {
-        const value = event.target.value;
-        if (value === 'satellite') {
-          if (!window.satelliteLayer) {
-            window.satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-              maxZoom: 19,
-              attribution: 'Tiles &copy; Esri'
-            });
-          }
-          if (window.normalLayer) {
-            map.removeLayer(window.normalLayer);
-          }
-          if (!map.hasLayer(window.satelliteLayer)) {
-            window.satelliteLayer.addTo(map);
-          }
+        state.imagery = event.target.value;
+        if (state.imagery === 'satellite') {
+          setSatelliteMap();
         } else {
-          if (window.satelliteLayer) {
-            map.removeLayer(window.satelliteLayer);
-          }
-          if (!window.normalLayer) {
-            window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              maxZoom: 19,
-              attribution: '&copy; OpenStreetMap contributors'
-            });
-          }
-          if (!map.hasLayer(window.normalLayer)) {
-            window.normalLayer.addTo(map);
-          }
+          setNormalMap();
         }
+        saveState();
       });
 
       uiModeSelect.addEventListener('change', (event) => {
-        const value = event.target.value;
-        document.body.classList.toggle('ui-compact', value === 'compact');
+        state.uiMode = event.target.value;
+        document.body.classList.toggle('ui-compact', state.uiMode === 'compact');
+        saveState();
+      });
+
+      routingSelect.addEventListener('change', (event) => {
+        state.routing = event.target.value;
+        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
+        saveState();
+      });
+
+      modeSelect.addEventListener('change', (event) => {
+        state.mode = event.target.value;
+        applyAccessMode();
+        saveState();
       });
 
       const map = L.map('map', {
         zoomControl: true,
         attributionControl: true,
         worldCopyJump: true
-      }).setView([40.7128, -74.0060], 12);
+      });
 
-      window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
+      const geoMarker = L.marker([0, 0], {
+        icon: L.divIcon({
+          className: 'user-marker-wrap',
+          html: '<div class="user-marker"></div>',
+          iconSize: [32, 32],
+          iconAnchor: [16, 30],
+          popupAnchor: [0, -30]
+        })
       }).addTo(map);
+
+      const DEFAULT_VIEW = { center: [40.7128, -74.0060], zoom: 12 };
+
+      const loadedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const savedCenter = loadedState.mapCenter || DEFAULT_VIEW.center;
+      const savedZoom = loadedState.mapZoom || DEFAULT_VIEW.zoom;
+      map.setView(savedCenter, savedZoom);
+
+      setNormalMap();
+
+      function updateHeadingMarker(heading) {
+        const markerEl = geoMarker.getElement();
+        if (!markerEl) return;
+        const rotation = Number.isFinite(heading) ? heading : 0;
+        markerEl.style.transform = `rotate(${rotation}deg)`;
+      }
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.watchPosition((position) => {
+          const { latitude, longitude, heading, accuracy } = position.coords;
+          const latLng = [latitude, longitude];
+          geoMarker.setLatLng(latLng);
+          if (accuracy) {
+            geoMarker.bindPopup(`Location accuracy: ${Math.round(accuracy)}m`).openPopup();
+          }
+          updateHeadingMarker(typeof heading === 'number' ? heading : 0);
+          if (state.mode !== 'guest') {
+            map.flyTo(latLng, Math.max(map.getZoom(), 15), { duration: 1.2 });
+          }
+        }, () => {
+          console.warn('Geolocation unavailable');
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 15000
+        });
+      }
 
       locateBtn.addEventListener('click', () => {
         if (!navigator.geolocation) {
@@ -577,8 +845,11 @@
 
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude } = position.coords;
-            map.flyTo([latitude, longitude], 15, { duration: 1.8 });
+            const { latitude, longitude, heading } = position.coords;
+            const target = [latitude, longitude];
+            geoMarker.setLatLng(target);
+            updateHeadingMarker(typeof heading === 'number' ? heading : 0);
+            map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 1.8 });
             locateBtn.disabled = false;
             locateBtn.style.opacity = '1';
           },
@@ -596,6 +867,21 @@
           sidebar.classList.remove('open');
         }
       });
+
+      map.on('moveend', () => {
+        state.mapCenter = map.getCenter();
+        state.mapZoom = map.getZoom();
+        saveState();
+      });
+
+      loadState();
+      applyAccessMode();
+      applyAnimations();
+      applyImagery();
+      applyUiMode();
+      applyRouting();
+      applyActivePage();
+      saveState();
     </script>
   </body>
 </html>
