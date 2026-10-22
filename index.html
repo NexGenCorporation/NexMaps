@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexMaps</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --blue: #0070f3;
+      --blue-deep: #0056c9;
+      --green: #00df89;
+      --green-deep: #00b66d;
+      --bg-1: #07131d;
+      --bg-2: #0d1d2e;
+      --bg-3: #101d31;
+      --panel: rgba(13, 22, 34, 0.68);
+      --panel-strong: rgba(7, 16, 25, 0.92);
+      --text: #edf6ff;
+      --muted: #a9bfd7;
+      --outlined: rgba(139, 162, 190, 0.22);
+      --shadow: rgba(0, 0, 0, 0.42);
+      --surface-glow: rgba(0, 208, 137, 0.25);
+      --chip: rgba(0, 223, 137, 0.15);
+      --danger: #ff5d7a;
+      --success: var(--green);
+      --leaflet-pane: 0;
+    }
+
+    body.theme-light {
+      --bg-1: #edf4ff;
+      --bg-2: #dfeeff;
+      --bg-3: #f6faff;
+      --panel: rgba(255, 255, 255, 0.72);
+      --panel-strong: rgba(255, 255, 255, 0.9);
+      --text: #0d1c2d;
+      --muted: #4e6278;
+      --outlined: rgba(28, 62, 110, 0.14);
+      --shadow: rgba(61, 90, 138, 0.14);
+      --surface-glow: rgba(0, 112, 243, 0.12);
+      --chip: rgba(0, 112, 243, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0, 112, 243, 0.25), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(0, 223, 137, 0.18), transparent 24%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 46%, var(--bg-3));
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-shell {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+      gap: 16px;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--outlined);
+      box-shadow: 0 18px 48px var(--shadow);
+      border-radius: 22px;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      will-change: transform;
+      transition: all 0.28s ease;
+      overflow: hidden;
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+    }
+
+    body.ui-static .panel {
+      background: rgba(17, 24, 33, 0.98);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-radius: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+      transform: none;
+      -webkit-transform: none;
+      will-change: auto;
+    }
+
+    body.theme-light.ui-static .panel {
+      background: rgba(255, 255, 255, 0.98);
+      border-color: rgba(17, 24, 33, 0.14);
+    }
+
+    .topbar {
+      min-height: 88px;
+      padding: 14px 18px 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.015)),
+        var(--panel);
+    }
+
+    body.ui-static .topbar {
+      background: rgba(10, 18, 24, 0.98);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(0, 223, 137, 0.2), rgba(0, 112, 243, 0.1));
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(0, 223, 137, 0.22), 0 10px 22px rgba(0, 223, 137, 0.12);
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+
+    .brand-mark::before {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--green), rgba(0, 223, 137, 0.6));
+      border: 3px solid rgba(0, 112, 243, 0.95);
+      box-shadow: inset 0 0 0 3px rgba(0, 112, 243, 0.22);
+      border-radius: 6px;
+      transform: rotate(45deg);
+      left: 9px;
+      top: 9px;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .brand-name {
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 166px;
+    }
+
+    .field label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+        var(--panel-strong);
+      color: var(--text);
+      border: 1px solid var(--outlined);
+      border-radius: 12px;
+      padding: 10px 38px 10px 12px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--green) 50%),
+        linear-gradient(135deg, var(--green) 50%, transparent 50%),
+        linear-gradient(to right, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
+      background-position:
+        calc(100% - 18px) calc(1.05em + 2px),
+        calc(100% - 13px) calc(1.05em + 2px),
+        100% 0;
+      background-size: 5px 5px, 5px 5px, 2.5em 2.5em;
+      background-repeat: no-repeat;
+    }
+
+    body.ui-static select {
+      background: rgba(255,255,255,0.02);
+      border-radius: 0;
+      box-shadow: none;
+      border-color: rgba(255,255,255,0.1);
+      background-image: none;
+      padding-right: 12px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 18px;
+      min-height: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+        var(--panel);
+    }
+
+    body.ui-static .sidebar {
+      background: rgba(12, 18, 24, 0.98);
+    }
+
+    .sidebar-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px 14px 16px;
+      border: 1px solid var(--outlined);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+    }
+
+    body.ui-static .sidebar-card {
+      background: rgba(255,255,255,0.02);
+      border-radius: 0;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .severity-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      align-self: flex-start;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(0, 223, 137, 0.18), rgba(0, 112, 243, 0.12));
+      color: var(--text);
+      border: 1px solid rgba(0, 223, 137, 0.28);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .status-pill .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 18px rgba(0, 223, 137, 0.8);
+      display: block;
+    }
+
+    .link-button,
+    .tool-button,
+    .modal-actions button {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .link-button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 48px;
+      border-radius: 14px;
+      padding: 0 18px;
+      color: #041719;
+      background: linear-gradient(135deg, var(--green), #78ffca 55%, #bffcdd);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 12px 24px rgba(0, 223, 137, 0.28);
+    }
+
+    .link-button:hover,
+    .tool-button:hover,
+    .modal-actions button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .map-panel {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      background: rgba(10, 17, 24, 0.8);
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #dfe9ef;
+    }
+
+    .leaflet-container {
+      background: #dfe9ef;
+      font: inherit;
+    }
+
+    .leaflet-control-zoom a {
+      background: rgba(10, 18, 24, 0.75);
+      color: var(--text);
+      border-color: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .map-overlay {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 500;
+      pointer-events: none;
+    }
+
+    .map-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(14, 20, 28, 0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .toolkit {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid var(--outlined);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .toolkit-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .tool-button {
+      min-height: 42px;
+      border-radius: 12px;
+      padding: 0 10px;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+      border: 1px solid var(--outlined);
+    }
+
+    .tool-button.active {
+      border-color: rgba(0, 223, 137, 0.52);
+      background: linear-gradient(135deg, rgba(0, 223, 137, 0.18), rgba(0, 112, 243, 0.1));
+      box-shadow: inset 0 0 18px rgba(0, 223, 137, 0.14);
+    }
+
+    .tool-button.danger {
+      color: #ffe7ec;
+      background: linear-gradient(180deg, rgba(255, 93, 122, 0.22), rgba(255, 93, 122, 0.08));
+      border-color: rgba(255, 93, 122, 0.35);
+    }
+
+    .helper-text {
+      font-size: 0.77rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .telemetry {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--outlined);
+      border-radius: 18px;
+      background: rgba(5, 10, 14, 0.4);
+    }
+
+    .telemetry-header {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #telemetryOutput {
+      margin: 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(2, 12, 18, 0.76);
+      border: 1px solid rgba(0, 223, 137, 0.18);
+      color: #d8ffe9;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.74rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 140px;
+    }
+
+    .auth-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4, 10, 19, 0.56);
+      z-index: 2000;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .auth-modal.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: min(440px, calc(100vw - 32px));
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(10, 18, 26, 0.94);
+      box-shadow: 0 22px 50px rgba(0,0,0,0.32);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .close-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .modal-body {
+      padding: 18px;
+      color: var(--text);
+    }
+
+    .modal-body p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .modal-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0, 223, 137, 0.12);
+      border: 1px solid rgba(0, 223, 137, 0.24);
+      color: #dffef0;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+    }
+
+    .modal-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(0, 223, 137, 0.8);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 0 18px 18px;
+    }
+
+    .modal-actions button {
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 12px;
+      color: var(--text);
+    }
+
+    .modal-actions button:first-child {
+      background: linear-gradient(135deg, var(--green), #7cffca);
+      color: #021d12;
+      box-shadow: 0 13px 24px rgba(0, 223, 137, 0.22);
+    }
+
+    .modal-actions .secondary {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
+    .easy-only,
+    .simple-only,
+    .advanced-only {
+      display: none;
+    }
+
+    body.complexity-easy .easy-only {
+      display: flex;
+    }
+
+    body.complexity-simple .simple-only {
+      display: flex;
+    }
+
+    body.complexity-advanced .advanced-only {
+      display: flex;
+    }
+
+    body.complexity-easy .simple-only,
+    body.complexity-easy .advanced-only {
+      display: none;
+    }
+
+    body.complexity-simple .easy-only,
+    body.complexity-simple .advanced-only {
+      display: none;
+    }
+
+    body.complexity-advanced .easy-only,
+    body.complexity-advanced .simple-only {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .app-shell {
+        padding: 12px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        order: 2;
+      }
+
+      .map-panel {
+        min-height: 420px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 14px 12px;
+      }
+
+      .header-controls {
+        justify-content: stretch;
+        width: 100%;
+      }
+
+      .field {
+        flex: 1 1 160px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .brand-sub {
+        letter-spacing: 0.06em;
+      }
+
+      .header-controls {
+        flex-direction: column;
+      }
+
+      .field {
+        width: 100%;
+      }
+
+      .tool-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="theme-dark ui-liquid complexity-simple">
+  <div class="app-shell">
+    <header class="topbar panel">
+      <div class="brand">
+        <a class="brand-link" href="https://nxgcorp.dpdns.org" aria-label="Go to NexGen Corp website">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-text">
+            <div class="brand-name">NexMaps</div>
+            <div class="brand-sub">NexGen Corp</div>
+          </div>
+        </a>
+      </div>
+
+      <div class="header-controls">
+        <div class="field">
+          <label for="uiFramework">UI Framework</label>
+          <select id="uiFramework">
+            <option value="liquid">Lightweight Liquid Glass UI</option>
+            <option value="classic">Classic Static Core UI</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="mapEngine">Map Engine</label>
+          <select id="mapEngine">
+            <option value="osm">Standard OpenStreetMap Core</option>
+            <option value="sat">Global Satellite Imagery Engine</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="complexity">Operational Complexity</label>
+          <select id="complexity">
+            <option value="easy">Easy Mode</option>
+            <option value="simple" selected>Simple Mode</option>
+            <option value="advanced">Advanced Mode</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="dark" selected>Dark Theme</option>
+            <option value="light">Light Theme</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar panel">
+        <div class="sidebar-card">
+          <div class="section-label">Core Status</div>
+          <div class="status-pill easy-only">
+            <span class="dot"></span>
+            <span>System Online</span>
+          </div>
+          <div class="severity-row simple-only">
+            <span class="dot" style="width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px rgba(0,223,137,.8); display:inline-block;"></span>
+            <span style="font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.72rem; color:var(--muted);">System Status</span>
+          </div>
+          <div class="section-label simple-only" style="margin-top:2px;">Authorization</div>
+          <button id="osmLinkBtn" class="link-button simple-only">Link OpenStreetMap Profile</button>
+        </div>
+
+        <div class="toolkit advanced-only">
+          <div class="toolkit-header">
+            <span>Mapping Toolkit</span>
+          </div>
+          <div class="tool-row">
+            <button class="tool-button" data-tool="track">Track</button>
+            <button class="tool-button" data-tool="line">Line</button>
+            <button class="tool-button" data-tool="polygon">Geometry</button>
+            <button class="tool-button danger" data-tool="clear">Clear</button>
+          </div>
+          <div class="helper-text">Click on the map to place points. Double-click to finalize the outline.</div>
+        </div>
+
+        <div class="telemetry advanced-only">
+          <div class="telemetry-header">Diagnostics</div>
+          <pre id="telemetryOutput"></pre>
+        </div>
+      </aside>
+
+      <main class="map-panel panel">
+        <div id="map"></div>
+        <div class="map-overlay easy-only">
+          <div class="map-status-chip"><span class="dot" style="width:8px;height:8px;display:inline-block;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(0,223,137,.8);"></span>System Online</div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="authModal" class="auth-modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>OpenStreetMap Authorization Check</span>
+        <button id="closeModal" class="close-btn" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Securely linking your OpenStreetMap profile with NexMaps for route, layer, and profile integration.</p>
+        <div class="modal-status">Authorization status: verified</div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirmLink">Confirm</button>
+        <button id="cancelLink" class="secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const mapEngineSelect = document.getElementById('mapEngine');
+    const uiFrameworkSelect = document.getElementById('uiFramework');
+    const complexitySelect = document.getElementById('complexity');
+    const themeSelect = document.getElementById('theme');
+    const osmLinkBtn = document.getElementById('osmLinkBtn');
+    const modal = document.getElementById('authModal');
+    const closeModal = document.getElementById('closeModal');
+    const confirmLink = document.getElementById('confirmLink');
+    const cancelLink = document.getElementById('cancelLink');
+    const telemetryOutput = document.getElementById('telemetryOutput');
+    const drawButtons = document.querySelectorAll('.tool-button');
+
+    const map = L.map('map', {
+      zoomControl: true,
+      attributionControl: true,
+      fadeAnimation: true,
+      zoomAnimation: true,
+      preferCanvas: true
+    });
+
+    map.setView([44.7722, 17.1910], 12);
+
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+
+    const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri'
+    });
+
+    const drawnLayer = L.layerGroup().addTo(map);
+    let activeDrawTool = null;
+    let drawPoints = [];
+    let draftLayer = null;
+
+    function applyUiFramework() {
+      const framework = uiFrameworkSelect.value;
+      document.body.classList.toggle('ui-liquid', framework === 'liquid');
+      document.body.classList.toggle('ui-static', framework === 'classic');
+    }
+
+    function applyTheme() {
+      const mode = themeSelect.value;
+      document.body.classList.toggle('theme-dark', mode === 'dark');
+      document.body.classList.toggle('theme-light', mode === 'light');
+    }
+
+    function applyComplexity() {
+      const mode = complexitySelect.value;
+      document.body.classList.toggle('complexity-easy', mode === 'easy');
+      document.body.classList.toggle('complexity-simple', mode === 'simple');
+      document.body.classList.toggle('complexity-advanced', mode === 'advanced');
+    }
+
+    function applyMapEngine() {
+      const engine = mapEngineSelect.value;
+      if (engine === 'osm') {
+        if (!map.hasLayer(osmLayer)) {
+          map.addLayer(osmLayer);
+        }
+        if (map.hasLayer(satLayer)) {
+          map.removeLayer(satLayer);
+        }
+      } else if (engine === 'sat') {
+        if (!map.hasLayer(satLayer)) {
+          map.addLayer(satLayer);
+        }
+        if (map.hasLayer(osmLayer)) {
+          map.removeLayer(osmLayer);
+        }
+      }
+      updateTelemetry();
+    }
+
+    function updateTelemetry() {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const engine = mapEngineSelect.options[mapEngineSelect.selectedIndex].text;
+      const theme = themeSelect.options[themeSelect.selectedIndex].text;
+      const framework = uiFrameworkSelect.options[uiFrameworkSelect.selectedIndex].text;
+      const complexity = complexitySelect.options[complexitySelect.selectedIndex].text;
+      const shapeCount = drawnLayer.getLayers().length;
+      const drawState = activeDrawTool ? activeDrawTool : 'idle';
+
+      telemetryOutput.textContent =
+        'NexMaps Telemetry\n' +
+        '====================\n' +
+        'Canvas Center: ' + center.lat.toFixed(4) + ', ' + center.lng.toFixed(4) + '\n' +
+        'Zoom Level: ' + zoom + '\n' +
+        'Map Engine: ' + engine + '\n' +
+        'Theme Mode: ' + theme + '\n' +
+        'Framework: ' + framework + '\n' +
+        'Mode: ' + complexity + '\n' +
+        'Draw Tool: ' + drawState + '\n' +
+        'Stored Geometries: ' + shapeCount + '\n' +
+        'Tile Layer: ' + (map.hasLayer(satLayer) ? 'Global Satellite Imagery Engine' : 'Standard OpenStreetMap Core');
+    }
+
+    function clearDraft() {
+      if (draftLayer) {
+        drawnLayer.removeLayer(draftLayer);
+        draftLayer = null;
+      }
+      drawPoints = [];
+    }
+
+    function finalizeShape() {
+      if (!drawPoints || drawPoints.length < 2) {
+        clearDraft();
+        return;
+      }
+
+      if (activeDrawTool === 'track' || activeDrawTool === 'line') {
+        const line = L.polyline(drawPoints, {
+          color: '#00df89',
+          weight: 3,
+          opacity: 0.95
+        }).addTo(drawnLayer);
+        line.bindPopup(activeDrawTool === 'track' ? 'Track' : 'Line');
+      }
+
+      if (activeDrawTool === 'polygon') {
+        if (drawPoints.length >= 3) {
+          const polygon = L.polygon(drawPoints, {
+            color: '#0070f3',
+            fillColor: '#0070f3',
+            fillOpacity: 0.25,
+            weight: 2
+          }).addTo(drawnLayer);
+          polygon.bindPopup('Geometry');
+        } else {
+          clearDraft();
+        }
+      }
+
+      clearDraft();
+      activeDrawTool = null;
+      drawButtons.forEach((button) => button.classList.remove('active'));
+      updateTelemetry();
+    }
+
+    function renderDraft() {
+      if (draftLayer) {
+        drawnLayer.removeLayer(draftLayer);
+      }
+
+      if (drawPoints.length < 1) {
+        draftLayer = null;
+        return;
+      }
+
+      const baseStyle = {
+        color: '#00df89',
+        weight: 3,
+        opacity: 0.9,
+        fillOpacity: 0.18
+      };
+
+      if (activeDrawTool === 'polygon') {
+        draftLayer = L.polygon(drawPoints, {
+          ...baseStyle,
+          color: '#0070f3',
+          fillColor: '#0070f3'
+        });
+      } else {
+        draftLayer = L.polyline(drawPoints, baseStyle);
+      }
+
+      draftLayer.addTo(drawnLayer);
+    }
+
+    function activateDrawTool(tool) {
+      if (tool === 'clear') {
+        activeDrawTool = null;
+        drawButtons.forEach((button) => button.classList.remove('active'));
+        drawnLayer.clearLayers();
+        clearDraft();
+        updateTelemetry();
+        return;
+      }
+
+      activeDrawTool = tool;
+      drawButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.tool === tool);
+      });
+
+      if (!tool) {
+        clearDraft();
+      }
+
+      updateTelemetry();
+    }
+
+    map.on('click', function (event) {
+      if (!activeDrawTool) {
+        return;
+      }
+
+      drawPoints.push([event.latlng.lat, event.latlng.lng]);
+      renderDraft();
+      updateTelemetry();
+    });
+
+    map.on('dblclick', function () {
+      if (!activeDrawTool) {
+        return;
+      }
+      finalizeShape();
+    });
+
+    map.on('move zoom', updateTelemetry);
+    map.on('baselayerchange', updateTelemetry);
+
+    mapEngineSelect.addEventListener('change', applyMapEngine);
+    uiFrameworkSelect.addEventListener('change', applyUiFramework);
+    complexitySelect.addEventListener('change', applyComplexity);
+    themeSelect.addEventListener('change', applyTheme);
+
+    drawButtons.forEach((button) => {
+      button.addEventListener('click', function () {
+        const selectedTool = button.dataset.tool;
+        if (activeDrawTool === selectedTool) {
+          activeDrawTool = null;
+          drawButtons.forEach((item) => item.classList.remove('active'));
+          clearDraft();
+          updateTelemetry();
+        } else {
+          activateDrawTool(selectedTool);
+        }
+      });
+    });
+
+    osmLinkBtn.addEventListener('click', function () {
+      modal.classList.remove('hidden');
+    });
+
+    closeModal.addEventListener('click', function () {
+      modal.classList.add('hidden');
+    });
+
+    cancelLink.addEventListener('click', function () {
+      modal.classList.add('hidden');
+    });
+
+    confirmLink.addEventListener('click', function () {
+      modal.classList.add('hidden');
+      osmLinkBtn.textContent = 'OSM Profile Linked';
+      osmLinkBtn.style.background = 'linear-gradient(135deg, rgba(0,223,137,.3), rgba(0,112,243,.15))';
+      osmLinkBtn.style.color = '#dffef2';
+      osmLinkBtn.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 18px rgba(0,223,137,0.12)';
+    });
+
+    map.whenReady(function () {
+      applyUiFramework();
+      applyTheme();
+      applyComplexity();
+      applyMapEngine();
+      updateTelemetry();
+      osmLayer.addTo(map);
+    });
+  </script>
+</body>
+</html>
