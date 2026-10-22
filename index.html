@@ -138,30 +138,58 @@
 
     .brand-mark {
       position: relative;
-      width: 42px;
-      height: 42px;
+      width: 164px;
+      height: 72px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, rgba(0, 223, 137, 0.2), rgba(0, 112, 243, 0.1));
-      border-radius: 12px;
-      box-shadow: inset 0 0 0 1px rgba(0, 223, 137, 0.22), 0 10px 22px rgba(0, 223, 137, 0.12);
+      border-radius: 18px;
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
+      overflow: visible;
     }
 
     .brand-mark::before {
       content: "";
       position: absolute;
-      width: 24px;
-      height: 24px;
-      background: linear-gradient(135deg, var(--green), rgba(0, 223, 137, 0.6));
-      border: 3px solid rgba(0, 112, 243, 0.95);
-      box-shadow: inset 0 0 0 3px rgba(0, 112, 243, 0.22);
-      border-radius: 6px;
-      transform: rotate(45deg);
-      left: 9px;
-      top: 9px;
+      inset: 0;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      opacity: 0;
+    }
+
+    .brand-badge {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 108px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(0, 223, 137, 0.92), rgba(0, 223, 137, 0.72));
+      color: #032410;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      font-size: 1.05rem;
+      box-shadow: 0 8px 20px rgba(0, 223, 137, 0.25);
+      transform: translateX(0.6rem) translateY(0.25rem);
+    }
+
+    .brand-mark::after {
+      content: "Gen";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: clamp(3.6rem, 4vw, 6.6rem);
+      font-weight: 800;
+      letter-spacing: -0.08em;
+      color: #2f6ea8;
+      line-height: 1;
+      text-shadow: none;
+      z-index: 0;
+      transform: translateY(0.05em);
     }
 
     .brand-text {
@@ -388,6 +416,19 @@
       border-color: rgba(255,255,255,0.08);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(16, 27, 36, 0.78) !important;
+      border-radius: 10px 0 0 0 !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      padding: 4px 8px !important;
+      color: #dfeaf5 !important;
+      font-size: 11px !important;
+    }
+
+    .leaflet-control-attribution a {
+      color: #8fdbff !important;
     }
 
     .map-overlay {
@@ -699,9 +740,11 @@
     <header class="topbar panel">
       <div class="brand">
         <a class="brand-link" href="https://nxgcorp.dpdns.org" aria-label="Go to NexGen Corp website">
-          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-badge">N·E·X</span>
+          </div>
           <div class="brand-text">
-            <div class="brand-name">NexMaps</div>
+            <div class="brand-name">NexMaps™</div>
             <div class="brand-sub">NexGen Corp</div>
           </div>
         </a>
@@ -755,8 +798,15 @@
             <span class="dot" style="width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px rgba(0,223,137,.8); display:inline-block;"></span>
             <span style="font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.72rem; color:var(--muted);">System Status</span>
           </div>
+
           <div class="section-label simple-only" style="margin-top:2px;">Authorization</div>
-          <button id="osmLinkBtn" class="link-button simple-only">Link OpenStreetMap Profile</button>
+          <button id="osmLinkBtn" class="link-button simple-only" type="button">Link OpenStreetMap Profile</button>
+          <button id="connectOsmBtn" class="link-button easy-only" type="button">Connect OpenStreetMap Account</button>
+          <button id="locationBtn" class="link-button easy-only" type="button">Move to My Location</button>
+          <button id="simpleLocationBtn" class="link-button simple-only" type="button">Move to My Location</button>
+          <button id="advancedLocationBtn" class="link-button advanced-only" type="button">Move to My Location</button>
+          <button id="navBtn" class="link-button simple-only" type="button">Navigation</button>
+          <button id="contributeBtn" class="link-button advanced-only" type="button">Contribute/Edit</button>
         </div>
 
         <div class="toolkit advanced-only">
@@ -764,10 +814,10 @@
             <span>Mapping Toolkit</span>
           </div>
           <div class="tool-row">
-            <button class="tool-button" data-tool="track">Track</button>
-            <button class="tool-button" data-tool="line">Line</button>
-            <button class="tool-button" data-tool="polygon">Geometry</button>
-            <button class="tool-button danger" data-tool="clear">Clear</button>
+            <button class="tool-button" data-tool="track" type="button">Track</button>
+            <button class="tool-button" data-tool="line" type="button">Line</button>
+            <button class="tool-button" data-tool="polygon" type="button">Geometry</button>
+            <button class="tool-button danger" data-tool="clear" type="button">Clear</button>
           </div>
           <div class="helper-text">Click on the map to place points. Double-click to finalize the outline.</div>
         </div>
@@ -781,7 +831,7 @@
       <main class="map-panel panel">
         <div id="map"></div>
         <div class="map-overlay easy-only">
-          <div class="map-status-chip"><span class="dot" style="width:8px;height:8px;display:inline-block;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(0,223,137,.8);"></span>System Online</div>
+          <div class="map-status-chip"><span class="dot" style="width:8px;height:8px;display:inline-block;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(0,223,137,.8);"></span>System Ready</div>
         </div>
       </main>
     </div>
@@ -798,8 +848,8 @@
         <div class="modal-status">Authorization status: verified</div>
       </div>
       <div class="modal-actions">
-        <button id="confirmLink">Confirm</button>
-        <button id="cancelLink" class="secondary">Cancel</button>
+        <button id="confirmLink" type="button">Confirm</button>
+        <button id="cancelLink" class="secondary" type="button">Cancel</button>
       </div>
     </div>
   </div>
@@ -811,6 +861,12 @@
     const complexitySelect = document.getElementById('complexity');
     const themeSelect = document.getElementById('theme');
     const osmLinkBtn = document.getElementById('osmLinkBtn');
+    const connectOsmBtn = document.getElementById('connectOsmBtn');
+    const locationBtn = document.getElementById('locationBtn');
+    const simpleLocationBtn = document.getElementById('simpleLocationBtn');
+    const advancedLocationBtn = document.getElementById('advancedLocationBtn');
+    const navBtn = document.getElementById('navBtn');
+    const contributeBtn = document.getElementById('contributeBtn');
     const modal = document.getElementById('authModal');
     const closeModal = document.getElementById('closeModal');
     const confirmLink = document.getElementById('confirmLink');
@@ -827,13 +883,17 @@
     });
 
     map.setView([44.7722, 17.1910], 12);
+    L.control.scale({ position: 'bottomleft', maxWidth: 100 }).addTo(map);
+    map.attributionControl.setPrefix(false);
+    map.attributionControl.addAttribution('© OpenStreetMap');
+    map.attributionControl.addAttribution('© OpenStreetMap Contributors');
 
     const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '© OpenStreetMap'
     });
 
     const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri'
+      attribution: '© OpenStreetMap Contributors'
     });
 
     const drawnLayer = L.layerGroup().addTo(map);
@@ -891,7 +951,7 @@
       const drawState = activeDrawTool ? activeDrawTool : 'idle';
 
       telemetryOutput.textContent =
-        'NexMaps Telemetry\n' +
+        'NexMaps™ Telemetry\n' +
         '====================\n' +
         'Canvas Center: ' + center.lat.toFixed(4) + ', ' + center.lng.toFixed(4) + '\n' +
         'Zoom Level: ' + zoom + '\n' +
@@ -999,73 +1059,97 @@
       updateTelemetry();
     }
 
-    map.on('click', function (event) {
-      if (!activeDrawTool) {
+    function moveToCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by this browser.');
         return;
       }
 
-      drawPoints.push([event.latlng.lat, event.latlng.lng]);
-      renderDraft();
-      updateTelemetry();
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.flyTo([latitude, longitude], 15, { duration: 1.8 });
+        },
+        () => {
+          alert('Unable to access your current location.');
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function openNavigation() {
+      const center = map.getCenter();
+      const url = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${center.lat},${center.lng};${center.lat + 0.01},${center.lng + 0.01}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function openContribution() {
+      window.open('https://openstreetmap.org/edit', '_blank', 'noopener,noreferrer');
+    }
+
+    function showAuthModal() {
+      modal.classList.remove('hidden');
+    }
+
+    function hideAuthModal() {
+      modal.classList.add('hidden');
+    }
+
+    osmLinkBtn.addEventListener('click', showAuthModal);
+    connectOsmBtn.addEventListener('click', showAuthModal);
+    closeModal.addEventListener('click', hideAuthModal);
+    cancelLink.addEventListener('click', hideAuthModal);
+    confirmLink.addEventListener('click', () => {
+      hideAuthModal();
+      alert('OpenStreetMap account linked successfully.');
     });
 
-    map.on('dblclick', function () {
-      if (!activeDrawTool) {
-        return;
-      }
-      finalizeShape();
-    });
-
-    map.on('move zoom', updateTelemetry);
-    map.on('baselayerchange', updateTelemetry);
+    locationBtn.addEventListener('click', moveToCurrentLocation);
+    simpleLocationBtn.addEventListener('click', moveToCurrentLocation);
+    advancedLocationBtn.addEventListener('click', moveToCurrentLocation);
+    navBtn.addEventListener('click', openNavigation);
+    contributeBtn.addEventListener('click', openContribution);
 
     mapEngineSelect.addEventListener('change', applyMapEngine);
     uiFrameworkSelect.addEventListener('change', applyUiFramework);
     complexitySelect.addEventListener('change', applyComplexity);
     themeSelect.addEventListener('change', applyTheme);
 
+    map.on('move zoom', updateTelemetry);
+    map.on('click', (event) => {
+      if (!activeDrawTool) return;
+      drawPoints.push([event.latlng.lat, event.latlng.lng]);
+      renderDraft();
+    });
+
+    map.on('dblclick', () => {
+      if (!activeDrawTool) return;
+      finalizeShape();
+    });
+
     drawButtons.forEach((button) => {
-      button.addEventListener('click', function () {
-        const selectedTool = button.dataset.tool;
-        if (activeDrawTool === selectedTool) {
-          activeDrawTool = null;
-          drawButtons.forEach((item) => item.classList.remove('active'));
-          clearDraft();
-          updateTelemetry();
+      button.addEventListener('click', () => {
+        const tool = button.dataset.tool;
+        if (tool === activeDrawTool) {
+          activateDrawTool(null);
         } else {
-          activateDrawTool(selectedTool);
+          activateDrawTool(tool);
         }
       });
     });
 
-    osmLinkBtn.addEventListener('click', function () {
-      modal.classList.remove('hidden');
-    });
-
-    closeModal.addEventListener('click', function () {
-      modal.classList.add('hidden');
-    });
-
-    cancelLink.addEventListener('click', function () {
-      modal.classList.add('hidden');
-    });
-
-    confirmLink.addEventListener('click', function () {
-      modal.classList.add('hidden');
-      osmLinkBtn.textContent = 'OSM Profile Linked';
-      osmLinkBtn.style.background = 'linear-gradient(135deg, rgba(0,223,137,.3), rgba(0,112,243,.15))';
-      osmLinkBtn.style.color = '#dffef2';
-      osmLinkBtn.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 18px rgba(0,223,137,0.12)';
-    });
-
-    map.whenReady(function () {
-      applyUiFramework();
-      applyTheme();
-      applyComplexity();
-      applyMapEngine();
-      updateTelemetry();
-      osmLayer.addTo(map);
-    });
+    applyUiFramework();
+    applyTheme();
+    applyComplexity();
+    applyMapEngine();
+    updateTelemetry();
+    if (map.hasLayer(osmLayer)) {
+      map.addLayer(osmLayer);
+    }
   </script>
 </body>
 </html>
