@@ -10,8 +10,8 @@
         --bg-1: #07131d;
         --bg-2: #0d1d2e;
         --bg-3: #101d31;
-        --panel: rgba(12, 22, 34, 0.74);
-        --panel-strong: rgba(7, 16, 25, 0.9);
+        --panel: rgba(12, 22, 34, 0.75);
+        --panel-strong: rgba(7, 16, 25, 0.92);
         --text: #edf6ff;
         --muted: #a9bfd7;
         --outlined: rgba(139, 162, 190, 0.22);
@@ -23,6 +23,7 @@
         --danger: #ff5d7a;
         --switch-bg: rgba(255,255,255,0.08);
         --switch-track: rgba(0,223,137,0.18);
+        --place: #ff9d2e;
       }
 
       * { box-sizing: border-box; }
@@ -82,27 +83,58 @@
         border-color: rgba(255,255,255,0.08);
       }
 
+      .custom-zoom {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 18;
+        display: flex;
+        flex-direction: column;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 16px 30px rgba(0,0,0,0.25);
+      }
+
+      .custom-zoom button {
+        width: 52px;
+        height: 52px;
+        border: none;
+        background: rgba(8, 16, 24, 0.74);
+        color: var(--text);
+        font-size: 2rem;
+        font-weight: 600;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+      }
+
+      .custom-zoom button + button {
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+
       .user-marker {
-        width: 32px;
-        height: 32px;
+        width: 34px;
+        height: 34px;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-        filter: drop-shadow(0 6px 10px rgba(0, 223, 137, 0.42));
-        transform: rotate(0deg);
-        transition: transform 0.18s ease-out;
+        filter: drop-shadow(0 8px 12px rgba(0, 223, 137, 0.42));
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+
+      .user-marker.hidden {
+        opacity: 0;
       }
 
       .user-marker::before {
         content: "";
         position: absolute;
-        width: 16px;
-        height: 16px;
+        inset: 8px;
         background: linear-gradient(180deg, #5be9a7, #18a8f5);
         border: 3px solid rgba(255,255,255,0.9);
         border-radius: 50%;
-        box-shadow: 0 0 0 6px rgba(16, 196, 122, 0.14);
+        box-shadow: 0 0 0 8px rgba(16, 196, 122, 0.12);
       }
 
       .user-marker::after {
@@ -117,6 +149,129 @@
         left: 50%;
         transform: translateX(-50%);
         filter: drop-shadow(0 0 8px rgba(0, 223, 137, 0.6));
+      }
+
+      .user-marker.pulse::before {
+        animation: pulseRing 1.8s infinite ease-out;
+      }
+
+      @keyframes pulseRing {
+        0% {
+          box-shadow: 0 0 0 0 rgba(0,223,137,0.42);
+        }
+        70% {
+          box-shadow: 0 0 0 14px rgba(0,223,137,0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(0,223,137,0);
+        }
+      }
+
+      .saved-marker-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        position: relative;
+        background: linear-gradient(180deg, #ffb760, #ff8b29);
+        border: 2px solid rgba(255,255,255,0.9);
+        box-shadow: 0 0 0 6px rgba(255,157,46,0.1), 0 10px 16px rgba(0,0,0,0.18);
+      }
+
+      .saved-marker-icon::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        background: rgba(255,255,255,0.85);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .search-box {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(560px, calc(100vw - 120px));
+        z-index: 20;
+      }
+
+      .search-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(10, 18, 26, 0.72);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        padding: 8px 12px 8px 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 16px 28px rgba(0,0,0,0.18);
+      }
+
+      .search-input-wrap input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-size: 0.96rem;
+        padding: 8px 6px;
+      }
+
+      .search-input-wrap input::placeholder {
+        color: var(--muted);
+      }
+
+      .search-button {
+        border: none;
+        background: linear-gradient(135deg, var(--green), #7ef0bd);
+        color: #041d17;
+        font-weight: 800;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .search-results {
+        margin-top: 8px;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 14px;
+        background: rgba(11, 18, 26, 0.78);
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 18px 28px rgba(0,0,0,0.18);
+      }
+
+      .search-results.visible {
+        display: flex;
+      }
+
+      .search-result {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        cursor: pointer;
+        color: var(--text);
+      }
+
+      .search-result strong {
+        font-size: 0.9rem;
+      }
+
+      .search-result span {
+        font-size: 0.72rem;
+        color: var(--muted);
       }
 
       .menu-toggle {
@@ -175,9 +330,7 @@
         overflow-y: auto;
       }
 
-      .sidebar.open {
-        transform: translateX(0);
-      }
+      .sidebar.open { transform: translateX(0); }
 
       .brand {
         display: flex;
@@ -257,9 +410,7 @@
         gap: 14px;
       }
 
-      .page-panel.active {
-        display: flex;
-      }
+      .page-panel.active { display: flex; }
 
       .menu-card,
       .settings-card,
@@ -337,9 +488,7 @@
         border-bottom: 1px solid rgba(255,255,255,0.06);
       }
 
-      .setting-row:last-child {
-        border-bottom: none;
-      }
+      .setting-row:last-child { border-bottom: none; }
 
       .setting-row label {
         font-size: 0.82rem;
@@ -376,9 +525,7 @@
         border-color: rgba(0,223,137,0.32);
       }
 
-      .toggle-control.on::before {
-        transform: translateX(22px);
-      }
+      .toggle-control.on::before { transform: translateX(22px); }
 
       select {
         width: 100%;
@@ -402,6 +549,48 @@
         color: #dffef4;
         font-size: 0.76rem;
         line-height: 1.5;
+      }
+
+      .saved-place-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .saved-place-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+      }
+
+      .saved-place-name {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .saved-place-name strong {
+        font-size: 0.8rem;
+      }
+
+      .saved-place-name small {
+        color: var(--muted);
+        font-size: 0.66rem;
+      }
+
+      .saved-place-item button {
+        border: none;
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 7px 8px;
+        cursor: pointer;
       }
 
       .about-body {
@@ -450,15 +639,49 @@
         text-transform: uppercase;
       }
 
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%) translateY(18px);
+        opacity: 0;
+        background: rgba(10, 18, 26, 0.85);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        z-index: 100;
+        transition: opacity 0.22s ease, transform 0.22s ease;
+        pointer-events: none;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.18);
+      }
+
+      .toast.visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
       @media (max-width: 640px) {
-        .sidebar {
-          width: min(88vw, 320px);
-        }
+        .sidebar { width: min(88vw, 320px); }
+        .search-box { width: calc(100vw - 100px); }
       }
     </style>
   </head>
   <body class="theme-dark animations-on">
     <div id="map" aria-label="Map"></div>
+
+    <div class="search-box">
+      <div class="search-input-wrap">
+        <input id="searchInput" type="text" placeholder="Search places, streets, neighborhoods..." aria-label="Search places" />
+        <button id="searchButton" class="search-button" type="button">Search</button>
+      </div>
+      <div id="searchResults" class="search-results" aria-live="polite"></div>
+    </div>
+
+    <div class="custom-zoom" aria-label="Zoom controls">
+      <button id="zoomInBtn" type="button" aria-label="Zoom in">+</button>
+      <button id="zoomOutBtn" type="button" aria-label="Zoom out">−</button>
+    </div>
 
     <button id="menuToggle" class="menu-toggle" aria-label="Open menu" type="button">
       <span aria-hidden="true"></span>
@@ -493,11 +716,8 @@
 
         <div class="menu-card">
           <div class="site-card">
-            <strong>NexMaps</strong>
-            <span>Explore the map and location features in a fullscreen map experience.</span>
-            <div class="link-row">
-              <a class="mini-link" href="#" aria-disabled="true">Map</a>
-            </div>
+            <strong>Saved Places</strong>
+            <div id="savedPlacesList" class="saved-place-list"></div>
           </div>
         </div>
       </section>
@@ -559,7 +779,7 @@
         <div class="menu-card">
           <span class="panel-label">About</span>
           <div class="about-body">
-            NexMaps is a map-first experience for fast navigation, precision location awareness, and clean UI controls. It remembers your recent map state and preferences so the app feels consistent from visit to visit.
+            NexMaps is a practical everyday map for daily navigation, wayfinding, quick place saving, and simple location awareness. It stores your recent settings and favorite places locally so it stays useful from one visit to the next.
           </div>
         </div>
       </section>
@@ -569,16 +789,29 @@
       <img src="./image.svg" alt="My location icon" />
     </button>
 
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
       const STORAGE_KEY = 'nexmaps_state_v1';
+      const SAVED_PLACES_KEY = 'nexmaps_saved_places_v1';
       const state = {
         mode: 'guest',
         animations: true,
         imagery: 'normal',
         uiMode: 'standard',
         routing: 'fastest',
-        activePage: 'websites'
+        activePage: 'websites',
+        mapCenter: [40.7128, -74.0060],
+        mapZoom: 12,
+        savedPlaces: []
+      };
+
+      const modeDescriptions = {
+        guest: 'Guest mode keeps the experience lightweight: map view and live location tracking only.',
+        simple: 'Simple mode adds login-friendly OpenStreetMap features and daily route basics.',
+        normal: 'Normal mode includes account features and navigation with route planning.',
+        advanced: 'Advanced/Contributor mode unlocks place saving, markup, and richer map contributions.'
       };
 
       const sidebar = document.getElementById('sidebar');
@@ -593,77 +826,86 @@
       const modeSummary = document.getElementById('modeSummary');
       const routeBadge = document.getElementById('routeBadge');
       const locateBtn = document.getElementById('locateBtn');
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+      const searchButton = document.getElementById('searchButton');
+      const toast = document.getElementById('toast');
+      const savedPlacesList = document.getElementById('savedPlacesList');
 
-      const modeDescriptions = {
-        guest: 'Guest mode keeps the experience minimal: map view + location tracking only.',
-        simple: 'Simple mode adds a signed-in OpenStreetMap profile and lightweight route prompts.',
-        normal: 'Normal mode includes OpenStreetMap account syncing and navigation tools.',
-        advanced: 'Advanced/Contributor mode unlocks routing, contribution tools, and full feature access.'
-      };
+      let map;
+      let locationMarker;
+      let lastKnownLocation = null;
+      let longPressTimer = null;
+      let activeSavedPlaces = [];
 
-      function loadState() {
+      function showToast(message, duration = 2200) {
+        toast.textContent = message;
+        toast.classList.add('visible');
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => {
+          toast.classList.remove('visible');
+        }, duration);
+      }
+
+      function loadPersistedState() {
         try {
-          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-          Object.assign(state, saved);
+          const stateData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+          Object.assign(state, stateData);
         } catch (error) {
-          console.warn('Could not load NexMaps state', error);
+          console.warn('Unable to load saved state', error);
+        }
+
+        try {
+          const savedPlacesData = JSON.parse(localStorage.getItem(SAVED_PLACES_KEY) || '[]');
+          state.savedPlaces = Array.isArray(savedPlacesData) ? savedPlacesData : [];
+        } catch (error) {
+          console.warn('Unable to load saved places', error);
         }
       }
 
       function saveState() {
-        const serializable = {
-          ...state,
-          mapCenter: map ? map.getCenter() : undefined,
-          mapZoom: map ? map.getZoom() : undefined
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          mode: state.mode,
+          animations: state.animations,
+          imagery: state.imagery,
+          uiMode: state.uiMode,
+          routing: state.routing,
+          activePage: state.activePage,
+          mapCenter: map ? map.getCenter() : state.mapCenter,
+          mapZoom: map ? map.getZoom() : state.mapZoom
+        }));
+        localStorage.setItem(SAVED_PLACES_KEY, JSON.stringify(state.savedPlaces));
       }
 
       function applyAccessMode() {
         const mode = state.mode || 'guest';
-        const modeLabel = mode.charAt(0).toUpperCase() + mode.slice(1);
         modeSelect.value = mode;
-        modeSummary.textContent = modeDescriptions[mode] || modeDescriptions.guest;
-        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
-        document.body.dataset.mode = mode;
-        document.body.classList.toggle('guest-mode', mode === 'guest');
-        document.body.classList.toggle('simple-mode', mode === 'simple');
-        document.body.classList.toggle('normal-mode', mode === 'normal');
-        document.body.classList.toggle('advanced-mode', mode === 'advanced');
-        const isGuest = mode === 'guest';
-        const isSimple = mode === 'simple';
-        const isNormal = mode === 'normal';
+        modeSummary.textContent = `${modeDescriptions[mode]}`;
         const isAdvanced = mode === 'advanced';
+        const isGuest = mode === 'guest';
 
-        if (!isGuest && !isSimple && !isNormal && !isAdvanced) {
-          // no-op, default guest route
+        document.body.dataset.mode = mode;
+        document.body.classList.toggle('guest-mode', isGuest);
+        document.body.classList.toggle('advanced-mode', isAdvanced);
+
+        const controls = [routingSelect, uiModeSelect, imagerySelect, animationsToggle];
+        controls.forEach((control) => {
+          if (!control) return;
+          if (control === animationsToggle) {
+            control.disabled = false;
+            return;
+          }
+          control.disabled = isGuest;
+          control.style.opacity = isGuest ? '0.55' : '1';
+        });
+
+        if (isGuest) {
+          state.routing = state.routing || 'fastest';
+          state.imagery = state.imagery || 'normal';
+          state.uiMode = state.uiMode || 'standard';
         }
 
-        const menuButtons = document.querySelectorAll('.nav-item');
-        menuButtons.forEach((btn) => {
-          const enabledModes = {
-            websites: ['guest','simple','normal','advanced'],
-            settings: ['guest','simple','normal','advanced'],
-            about: ['guest','simple','normal','advanced']
-          };
-          const allowed = enabledModes[btn.dataset.page] || [];
-          btn.disabled = !allowed.includes(mode);
-          btn.style.opacity = btn.disabled ? '0.45' : '1';
-          btn.style.cursor = btn.disabled ? 'default' : 'pointer';
-        });
-
-        const navigationFeatures = ['routingSelect', 'modeSelect', 'imagerySelect', 'uiModeSelect'];
-        navigationFeatures.forEach((id) => {
-          const item = document.getElementById(id);
-          if (!item) return;
-          const allow = id === 'modeSelect' || id === 'imagerySelect' || id === 'uiModeSelect' || mode !== 'guest';
-          item.disabled = !allow;
-          item.style.opacity = allow ? '1' : '0.5';
-        });
-
-        document.querySelectorAll('.mode-summary').forEach((node) => {
-          node.textContent = `${modeLabel} mode: ${modeDescriptions[mode]}`;
-        });
+        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
       }
 
       function applyAnimations() {
@@ -690,13 +932,14 @@
         routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
       }
 
-      function applyActivePage() {
+      function applyPage() {
         navButtons.forEach((btn) => {
-          const isActive = btn.dataset.page === state.activePage;
-          btn.classList.toggle('active', isActive);
+          const active = btn.dataset.page === state.activePage;
+          btn.classList.toggle('active', active);
         });
         panels.forEach((panel) => {
-          panel.classList.toggle('active', panel.dataset.panel === state.activePage);
+          const active = panel.dataset.panel === state.activePage;
+          panel.classList.toggle('active', active);
         });
       }
 
@@ -704,6 +947,7 @@
         if (!window.satelliteLayer) {
           window.satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
+            maxNativeZoom: 18,
             attribution: 'Tiles &copy; Esri'
           });
         }
@@ -719,6 +963,7 @@
         if (!window.normalLayer) {
           window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            maxNativeZoom: 18,
             attribution: '&copy; OpenStreetMap contributors'
           });
         }
@@ -730,157 +975,363 @@
         }
       }
 
-      menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-      });
+      function clampZoom() {
+        const maxDetailZoom = 18;
+        if (map.getZoom() > maxDetailZoom) {
+          map.setZoom(maxDetailZoom);
+          showToast('Map detail is limited beyond this zoom. Best resolution reached.');
+        }
+      }
 
-      navButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          if (button.disabled) return;
-          navButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
-          const page = button.dataset.page;
-          state.activePage = page;
-          panels.forEach((panel) => {
-            panel.classList.toggle('active', panel.dataset.panel === page);
-          });
+      function initMap() {
+        map = L.map('map', {
+          zoomControl: false,
+          attributionControl: true,
+          worldCopyJump: true,
+          zoomSnap: 0.25,
+          minZoom: 2,
+          maxZoom: 18
+        }).setView(state.mapCenter, state.mapZoom);
+
+        map.on('zoomend', clampZoom);
+        map.on('moveend', () => {
+          state.mapCenter = map.getCenter();
+          state.mapZoom = map.getZoom();
           saveState();
         });
-      });
 
-      animationsToggle.addEventListener('click', () => {
-        state.animations = !state.animations;
-        applyAnimations();
-        saveState();
-      });
-
-      imagerySelect.addEventListener('change', (event) => {
-        state.imagery = event.target.value;
-        if (state.imagery === 'satellite') {
-          setSatelliteMap();
-        } else {
-          setNormalMap();
-        }
-        saveState();
-      });
-
-      uiModeSelect.addEventListener('change', (event) => {
-        state.uiMode = event.target.value;
-        document.body.classList.toggle('ui-compact', state.uiMode === 'compact');
-        saveState();
-      });
-
-      routingSelect.addEventListener('change', (event) => {
-        state.routing = event.target.value;
-        routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
-        saveState();
-      });
-
-      modeSelect.addEventListener('change', (event) => {
-        state.mode = event.target.value;
-        applyAccessMode();
-        saveState();
-      });
-
-      const map = L.map('map', {
-        zoomControl: true,
-        attributionControl: true,
-        worldCopyJump: true
-      });
-
-      const geoMarker = L.marker([0, 0], {
-        icon: L.divIcon({
-          className: 'user-marker-wrap',
-          html: '<div class="user-marker"></div>',
-          iconSize: [32, 32],
-          iconAnchor: [16, 30],
-          popupAnchor: [0, -30]
-        })
-      }).addTo(map);
-
-      const DEFAULT_VIEW = { center: [40.7128, -74.0060], zoom: 12 };
-
-      const loadedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-      const savedCenter = loadedState.mapCenter || DEFAULT_VIEW.center;
-      const savedZoom = loadedState.mapZoom || DEFAULT_VIEW.zoom;
-      map.setView(savedCenter, savedZoom);
-
-      setNormalMap();
-
-      function updateHeadingMarker(heading) {
-        const markerEl = geoMarker.getElement();
-        if (!markerEl) return;
-        const rotation = Number.isFinite(heading) ? heading : 0;
-        markerEl.style.transform = `rotate(${rotation}deg)`;
+        setNormalMap();
       }
 
-      if ('geolocation' in navigator) {
-        navigator.geolocation.watchPosition((position) => {
-          const { latitude, longitude, heading, accuracy } = position.coords;
-          const latLng = [latitude, longitude];
-          geoMarker.setLatLng(latLng);
-          if (accuracy) {
-            geoMarker.bindPopup(`Location accuracy: ${Math.round(accuracy)}m`).openPopup();
-          }
-          updateHeadingMarker(typeof heading === 'number' ? heading : 0);
-          if (state.mode !== 'guest') {
-            map.flyTo(latLng, Math.max(map.getZoom(), 15), { duration: 1.2 });
-          }
-        }, () => {
-          console.warn('Geolocation unavailable');
-        }, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 15000
+      function createLocationMarkerIcon() {
+        return L.divIcon({
+          className: 'user-marker-wrap',
+          html: '<div class="user-marker pulse"></div>',
+          iconSize: [34, 34],
+          iconAnchor: [17, 30],
+          popupAnchor: [0, -20]
         });
       }
 
-      locateBtn.addEventListener('click', () => {
-        if (!navigator.geolocation) {
-          alert('Geolocation is not supported on this browser.');
+      function updateLocationMarker(latLng, heading = 0, visible = true) {
+        if (!locationMarker) {
+          locationMarker = L.marker(latLng, { icon: createLocationMarkerIcon(), keyboard: false }).addTo(map);
+        } else {
+          locationMarker.setLatLng(latLng);
+        }
+
+        const markerEl = locationMarker.getElement();
+        if (markerEl) {
+          markerEl.classList.toggle('hidden', !visible);
+          markerEl.style.transform = `rotate(${heading}deg)`;
+        }
+      }
+
+      function renderSavedPlaces() {
+        savedPlacesList.innerHTML = '';
+        if (!state.savedPlaces || state.savedPlaces.length === 0) {
+          savedPlacesList.innerHTML = '<div class="saved-place-item"><div class="saved-place-name"><strong>No saved places yet</strong><small>Long-press the map in Advanced mode to save a place.</small></div></div>';
           return;
         }
 
-        locateBtn.disabled = true;
-        locateBtn.style.opacity = '0.7';
+        state.savedPlaces.forEach((place, index) => {
+          const item = document.createElement('div');
+          item.className = 'saved-place-item';
+          item.innerHTML = `
+            <div class="saved-place-name">
+              <strong>${place.name}</strong>
+              <small>${place.lat.toFixed(4)}, ${place.lng.toFixed(4)}</small>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button type="button" data-go="${index}">Go</button>
+              <button type="button" data-remove="${index}">×</button>
+            </div>
+          `;
+          savedPlacesList.appendChild(item);
+        });
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude, heading } = position.coords;
-            const target = [latitude, longitude];
-            geoMarker.setLatLng(target);
-            updateHeadingMarker(typeof heading === 'number' ? heading : 0);
-            map.flyTo(target, Math.max(map.getZoom(), 15), { duration: 1.8 });
-            locateBtn.disabled = false;
-            locateBtn.style.opacity = '1';
-          },
-          () => {
-            alert('Unable to get your location right now.');
-            locateBtn.disabled = false;
-            locateBtn.style.opacity = '1';
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      });
+        savedPlacesList.querySelectorAll('[data-go]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const idx = Number(btn.dataset.go);
+            const place = state.savedPlaces[idx];
+            if (place) map.flyTo([place.lat, place.lng], 15, { duration: 1.3 });
+          });
+        });
 
-      document.addEventListener('click', (event) => {
-        if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-          sidebar.classList.remove('open');
-        }
-      });
+        savedPlacesList.querySelectorAll('[data-remove]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const idx = Number(btn.dataset.remove);
+            state.savedPlaces.splice(idx, 1);
+            saveState();
+            renderSavedPlaces();
+          });
+        });
+      }
 
-      map.on('moveend', () => {
-        state.mapCenter = map.getCenter();
-        state.mapZoom = map.getZoom();
+      function addSavedPlace(lat, lng, name = 'Saved Place') {
+        state.savedPlaces.unshift({ name, lat, lng, createdAt: Date.now() });
+        state.savedPlaces = state.savedPlaces.slice(0, 12);
         saveState();
-      });
+        renderSavedPlaces();
+      }
 
-      loadState();
+      function promptSavePlace(latlng) {
+        const placeName = window.prompt('Name this saved place:', `Spot ${state.savedPlaces.length + 1}`);
+        if (!placeName || !placeName.trim()) return;
+        addSavedPlace(latlng.lat, latlng.lng, placeName.trim());
+        showToast('Saved place added.');
+      }
+
+      function handleMapPress(latlng) {
+        if (state.mode !== 'advanced') {
+          showToast('Advanced/Contributor mode is required to save a new place.');
+          return;
+        }
+
+        const coords = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+        const marker = L.marker(latlng, {
+          icon: L.divIcon({
+            className: 'custom-pin',
+            html: '<div class="saved-marker-icon"></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 22],
+            popupAnchor: [0, -18]
+          })
+        }).addTo(map);
+
+        marker.bindPopup(`<div><strong>Location</strong><br>${coords}<br><br><button type="button" class="save-place-btn" style="padding:8px 10px;border:none;border-radius:8px;background:#00df89;color:#041d17;font-weight:800;cursor:pointer;">Save place</button></div>`).openPopup();
+
+        marker.on('popupopen', () => {
+          const btn = marker.getPopup().getElement().querySelector('.save-place-btn');
+          if (!btn) return;
+          btn.onclick = () => {
+            promptSavePlace(latlng);
+            map.removeLayer(marker);
+          };
+        });
+
+        setTimeout(() => {
+          if (map.hasLayer(marker)) {
+            marker.closePopup();
+          }
+        }, 5000);
+      }
+
+      function initAdvancedLongPress() {
+        let pointerDown = false;
+        let startPos = null;
+
+        map.on('mousedown', (event) => {
+          if (state.mode !== 'advanced') return;
+          pointerDown = true;
+          startPos = event.containerPoint;
+          longPressTimer = setTimeout(() => {
+            if (pointerDown && startPos) {
+              const latlng = event.latlng;
+              handleMapPress(latlng);
+            }
+          }, 500);
+        });
+
+        map.on('mouseup', () => {
+          pointerDown = false;
+          clearTimeout(longPressTimer);
+        });
+
+        map.on('mousemove', (event) => {
+          if (pointerDown && startPos) {
+            const moved = Math.abs(event.containerPoint.x - startPos.x) > 10 || Math.abs(event.containerPoint.y - startPos.y) > 10;
+            if (moved) {
+              pointerDown = false;
+              clearTimeout(longPressTimer);
+            }
+          }
+        });
+      }
+
+      function searchPlaces(query) {
+        if (!query.trim()) {
+          searchResults.innerHTML = '';
+          searchResults.classList.remove('visible');
+          return;
+        }
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=${encodeURIComponent(query)}`)
+          .then((res) => res.json())
+          .then((items) => {
+            searchResults.innerHTML = '';
+            if (!items.length) {
+              searchResults.innerHTML = '<div class="search-result"><strong>No results</strong><span>Try a wider place, road, or neighborhood.</span></div>';
+              searchResults.classList.add('visible');
+              return;
+            }
+
+            items.forEach((item) => {
+              const result = document.createElement('div');
+              result.className = 'search-result';
+              result.innerHTML = `<strong>${item.display_name.split(',')[0]}</strong><span>${item.display_name}</span>`;
+              result.addEventListener('click', () => {
+                const lat = Number(item.lat);
+                const lng = Number(item.lon);
+                map.flyTo([lat, lng], 14, { duration: 1.3 });
+                searchResults.classList.remove('visible');
+                searchInput.value = item.display_name;
+              });
+              searchResults.appendChild(result);
+            });
+            searchResults.classList.add('visible');
+          })
+          .catch(() => {
+            searchResults.innerHTML = '<div class="search-result"><strong>Search unavailable</strong><span>Check your connection and try again.</span></div>';
+            searchResults.classList.add('visible');
+          });
+      }
+
+      function initSearch() {
+        searchButton.addEventListener('click', () => {
+          searchPlaces(searchInput.value);
+        });
+
+        searchInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') searchPlaces(searchInput.value);
+        });
+
+        document.addEventListener('click', (event) => {
+          if (!searchResults.contains(event.target) && !searchInput.contains(event.target) && !searchButton.contains(event.target)) {
+            searchResults.classList.remove('visible');
+          }
+        });
+      }
+
+      function initLocationWatch() {
+        if (!('geolocation' in navigator)) {
+          showToast('Geolocation is not supported here.');
+          return;
+        }
+
+        navigator.geolocation.watchPosition((position) => {
+          const { latitude, longitude, heading, accuracy } = position.coords;
+          const latLng = [latitude, longitude];
+          lastKnownLocation = latLng;
+          updateLocationMarker(latLng, typeof heading === 'number' ? heading : 0, true);
+
+          if (accuracy && accuracy > 500) {
+            showToast(`Location accuracy: ${Math.round(accuracy)}m`);
+          }
+
+          if (map && state.mode !== 'guest' && Math.abs(map.getZoom() - 15) > 1) {
+            map.flyTo(latLng, Math.max(12, Math.min(17, map.getZoom())), { duration: 1.1 });
+          }
+        }, () => {
+          if (locationMarker) {
+            locationMarker.getElement()?.classList.add('hidden');
+          }
+        }, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 10000
+        });
+      }
+
+      function initButtons() {
+        menuToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('open');
+        });
+
+        navButtons.forEach((button) => {
+          button.addEventListener('click', () => {
+            if (button.disabled) return;
+            navButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+            const page = button.dataset.page;
+            state.activePage = page;
+            panels.forEach((panel) => {
+              panel.classList.toggle('active', panel.dataset.panel === page);
+            });
+            saveState();
+          });
+        });
+
+        animationsToggle.addEventListener('click', () => {
+          state.animations = !state.animations;
+          applyAnimations();
+          saveState();
+        });
+
+        imagerySelect.addEventListener('change', (event) => {
+          state.imagery = event.target.value;
+          if (state.imagery === 'satellite') setSatelliteMap();
+          else setNormalMap();
+          saveState();
+        });
+
+        uiModeSelect.addEventListener('change', (event) => {
+          state.uiMode = event.target.value;
+          document.body.classList.toggle('ui-compact', state.uiMode === 'compact');
+          saveState();
+        });
+
+        routingSelect.addEventListener('change', (event) => {
+          state.routing = event.target.value;
+          routeBadge.textContent = routingSelect.options[routingSelect.selectedIndex].text;
+          saveState();
+        });
+
+        modeSelect.addEventListener('change', (event) => {
+          state.mode = event.target.value;
+          applyAccessMode();
+          saveState();
+        });
+
+        document.getElementById('zoomInBtn').addEventListener('click', () => map.zoomIn());
+        document.getElementById('zoomOutBtn').addEventListener('click', () => map.zoomOut());
+
+        locateBtn.addEventListener('click', () => {
+          if (!navigator.geolocation) {
+            alert('Geolocation is not supported on this browser.');
+            return;
+          }
+
+          locateBtn.disabled = true;
+          locateBtn.style.opacity = '0.7';
+
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const { latitude, longitude, heading } = position.coords;
+              const target = [latitude, longitude];
+              updateLocationMarker(target, typeof heading === 'number' ? heading : 0, true);
+              map.flyTo(target, Math.max(12, Math.min(17, map.getZoom() || 14)), { duration: 1.6 });
+              locateBtn.disabled = false;
+              locateBtn.style.opacity = '1';
+            },
+            () => {
+              alert('Unable to locate your position right now.');
+              locateBtn.disabled = false;
+              locateBtn.style.opacity = '1';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        });
+
+        document.addEventListener('click', (event) => {
+          if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+            sidebar.classList.remove('open');
+          }
+        });
+      }
+
+      loadPersistedState();
+      initMap();
+      initButtons();
+      initSearch();
+      initLocationWatch();
+      initAdvancedLongPress();
       applyAccessMode();
       applyAnimations();
       applyImagery();
       applyUiMode();
       applyRouting();
-      applyActivePage();
+      applyPage();
+      renderSavedPlaces();
       saveState();
     </script>
   </body>
