@@ -25,6 +25,8 @@
       --danger: #ff5d7a;
       --success: var(--green);
       --leaflet-pane: 0;
+      --switch-bg: rgba(255,255,255,0.08);
+      --switch-track: rgba(0,223,137,0.18);
     }
 
     body.theme-light {
@@ -39,11 +41,11 @@
       --shadow: rgba(61, 90, 138, 0.14);
       --surface-glow: rgba(0, 112, 243, 0.12);
       --chip: rgba(0, 112, 243, 0.08);
+      --switch-bg: rgba(19, 39, 77, 0.06);
+      --switch-track: rgba(0, 112, 243, 0.12);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
@@ -60,6 +62,13 @@
     body {
       min-height: 100vh;
       overflow: hidden;
+      transition: background 0.35s ease;
+    }
+
+    body.animations-off * {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
     }
 
     .app-shell {
@@ -115,6 +124,7 @@
       background:
         linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.015)),
         var(--panel);
+      animation: fadeSlideDown 0.45s ease;
     }
 
     body.ui-static .topbar {
@@ -137,59 +147,21 @@
     }
 
     .brand-mark {
-      position: relative;
-      width: 164px;
-      height: 72px;
+      width: 180px;
+      height: 80px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 18px;
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
+    }
+
+    .brand-mark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
       overflow: visible;
-    }
-
-    .brand-mark::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-      opacity: 0;
-    }
-
-    .brand-badge {
-      position: relative;
-      z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 108px;
-      height: 36px;
-      padding: 0 12px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, rgba(0, 223, 137, 0.92), rgba(0, 223, 137, 0.72));
-      color: #032410;
-      font-weight: 900;
-      letter-spacing: 0.18em;
-      font-size: 1.05rem;
-      box-shadow: 0 8px 20px rgba(0, 223, 137, 0.25);
-      transform: translateX(0.6rem) translateY(0.25rem);
-    }
-
-    .brand-mark::after {
-      content: "Gen";
-      position: absolute;
-      left: 0;
-      top: 0;
-      font-size: clamp(3.6rem, 4vw, 6.6rem);
-      font-weight: 800;
-      letter-spacing: -0.08em;
-      color: #2f6ea8;
-      line-height: 1;
-      text-shadow: none;
-      z-index: 0;
-      transform: translateY(0.05em);
+      filter: drop-shadow(0 12px 18px rgba(0, 223, 137, 0.12));
     }
 
     .brand-text {
@@ -290,7 +262,7 @@
       gap: 16px;
       padding: 18px;
       min-height: 0;
-      overflow: hidden;
+      overflow-y: auto;
       background:
         linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
         var(--panel);
@@ -310,6 +282,7 @@
       background: rgba(255,255,255,0.02);
       transform: translateZ(0);
       -webkit-transform: translateZ(0);
+      animation: floatIn 0.5s ease;
     }
 
     body.ui-static .sidebar-card {
@@ -360,7 +333,9 @@
 
     .link-button,
     .tool-button,
-    .modal-actions button {
+    .modal-actions button,
+    .toggle-button,
+    .nav-pick-btn {
       appearance: none;
       border: none;
       cursor: pointer;
@@ -383,11 +358,133 @@
         0 12px 24px rgba(0, 223, 137, 0.28);
     }
 
+    .link-button.secondary,
+    .nav-pick-btn,
+    .toggle-button {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+    }
+
     .link-button:hover,
     .tool-button:hover,
-    .modal-actions button:hover {
+    .modal-actions button:hover,
+    .nav-pick-btn:hover,
+    .toggle-button:hover {
       transform: translateY(-1px);
       filter: brightness(1.04);
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--outlined);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .toggle-button {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      border-radius: 999px;
+      background: var(--switch-bg);
+      padding: 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .toggle-button::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #eafcff, #c5d7e8);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
+    }
+
+    .toggle-button.on {
+      background: linear-gradient(135deg, rgba(0,223,137,0.2), rgba(0,112,243,0.18));
+      border-color: rgba(0,223,137,0.32);
+    }
+
+    .toggle-button.on::before {
+      transform: translateX(24px);
+    }
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .mini-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      text-decoration: none;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .mini-link:hover {
+      transform: translateX(2px);
+      border-color: rgba(0,223,137,0.28);
+    }
+
+    .mini-link span {
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .mini-link strong {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .about-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .about-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .about-item strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .about-note {
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.5;
+      padding-top: 4px;
     }
 
     .map-panel {
@@ -511,6 +608,59 @@
       line-height: 1.5;
     }
 
+    .nav-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--outlined);
+    }
+
+    .nav-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .nav-pick-btn {
+      min-height: 40px;
+      border-radius: 10px;
+      padding: 0 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .nav-pick-btn.active {
+      background: linear-gradient(135deg, rgba(0,223,137,0.18), rgba(0,112,243,0.10));
+      border-color: rgba(0,223,137,0.36);
+    }
+
+    .waypoints {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .waypoint {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.02);
+      padding: 8px 9px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .waypoint strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
     .telemetry {
       display: flex;
       flex-direction: column;
@@ -544,7 +694,8 @@
       min-height: 140px;
     }
 
-    .auth-modal {
+    .auth-modal,
+    .contribute-modal {
       position: fixed;
       inset: 0;
       display: flex;
@@ -556,7 +707,8 @@
       -webkit-backdrop-filter: blur(8px);
     }
 
-    .auth-modal.hidden {
+    .auth-modal.hidden,
+    .contribute-modal.hidden {
       display: none;
     }
 
@@ -624,6 +776,24 @@
       box-shadow: 0 0 12px rgba(0, 223, 137, 0.8);
     }
 
+    .contribute-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .contribute-option {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
@@ -656,36 +826,33 @@
       display: none;
     }
 
-    body.complexity-easy .easy-only {
-      display: flex;
-    }
-
-    body.complexity-simple .simple-only {
-      display: flex;
-    }
-
-    body.complexity-advanced .advanced-only {
-      display: flex;
-    }
+    body.complexity-easy .easy-only { display: flex; }
+    body.complexity-simple .simple-only { display: flex; }
+    body.complexity-advanced .advanced-only { display: flex; }
 
     body.complexity-easy .simple-only,
-    body.complexity-easy .advanced-only {
-      display: none;
-    }
-
+    body.complexity-easy .advanced-only { display: none; }
     body.complexity-simple .easy-only,
-    body.complexity-simple .advanced-only {
-      display: none;
+    body.complexity-simple .advanced-only { display: none; }
+    body.complexity-advanced .easy-only,
+    body.complexity-advanced .simple-only { display: none; }
+
+    @keyframes fadeSlideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    body.complexity-advanced .easy-only,
-    body.complexity-advanced .simple-only {
-      display: none;
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 920px) {
+      body { overflow: auto; }
       .app-shell {
         padding: 12px;
+        height: auto;
+        min-height: 100vh;
       }
 
       .workspace {
@@ -717,6 +884,11 @@
     }
 
     @media (max-width: 540px) {
+      .brand-mark {
+        width: 150px;
+        height: 72px;
+      }
+
       .brand-sub {
         letter-spacing: 0.06em;
       }
@@ -729,19 +901,26 @@
         width: 100%;
       }
 
-      .tool-row {
+      .tool-row,
+      .nav-row {
         grid-template-columns: 1fr 1fr;
       }
     }
   </style>
 </head>
-<body class="theme-dark ui-liquid complexity-simple">
+<body class="theme-dark ui-liquid complexity-simple animations-on">
   <div class="app-shell">
     <header class="topbar panel">
       <div class="brand">
         <a class="brand-link" href="https://nxgcorp.dpdns.org" aria-label="Go to NexGen Corp website">
           <div class="brand-mark" aria-hidden="true">
-            <span class="brand-badge">N·E·X</span>
+            <svg viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NexGen logo">
+              <g>
+                <rect x="110" y="36" width="138" height="46" rx="10" fill="#00df89"/>
+                <text x="127" y="68" font-size="24" font-weight="900" fill="#061d18" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">N·E·X</text>
+                <text x="0" y="78" font-size="92" font-weight="800" fill="#2f6ea8" font-family="Segoe UI, Arial, sans-serif" letter-spacing="-6">Gen</text>
+              </g>
+            </svg>
           </div>
           <div class="brand-text">
             <div class="brand-name">NexMaps™</div>
@@ -802,11 +981,53 @@
           <div class="section-label simple-only" style="margin-top:2px;">Authorization</div>
           <button id="osmLinkBtn" class="link-button simple-only" type="button">Link OpenStreetMap Profile</button>
           <button id="connectOsmBtn" class="link-button easy-only" type="button">Connect OpenStreetMap Account</button>
-          <button id="locationBtn" class="link-button easy-only" type="button">Move to My Location</button>
-          <button id="simpleLocationBtn" class="link-button simple-only" type="button">Move to My Location</button>
-          <button id="advancedLocationBtn" class="link-button advanced-only" type="button">Move to My Location</button>
-          <button id="navBtn" class="link-button simple-only" type="button">Navigation</button>
-          <button id="contributeBtn" class="link-button advanced-only" type="button">Contribute/Edit</button>
+
+          <div class="toggle-row">
+            <span style="font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.65rem; color:var(--muted);">Animations</span>
+            <button id="animationToggle" class="toggle-button on" type="button" aria-label="Toggle animations"></button>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="section-label">Location</div>
+          <div class="nav-panel">
+            <div class="nav-row">
+              <button class="nav-pick-btn" id="pickStartBtn" type="button">Pick Start</button>
+              <button class="nav-pick-btn" id="pickDestinationBtn" type="button">Pick Destination</button>
+            </div>
+            <div class="nav-row">
+              <button class="nav-pick-btn" id="gpsBtn" type="button">My Location</button>
+              <button class="nav-pick-btn" id="zoomResetBtn" type="button">Reset View</button>
+            </div>
+            <div class="waypoints">
+              <div class="waypoint"><span>Start</span><strong id="startLabel">Not set</strong></div>
+              <div class="waypoint"><span>Destination</span><strong id="destinationLabel">Not set</strong></div>
+            </div>
+            <button id="routeBtn" class="link-button secondary" type="button">Build Route</button>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="section-label">Our Websites</div>
+          <div class="card-list">
+            <a class="mini-link" href="https://linktr.ee/nxgcorp" target="_blank" rel="noopener noreferrer"><span>Linktr.ee</span><strong>nxgcorp</strong></a>
+            <a class="mini-link" href="https://nxgcorp.dpdns.org" target="_blank" rel="noopener noreferrer"><span>Website</span><strong>NexGen Corp</strong></a>
+            <a class="mini-link" href="https://on.soundcloud.com/ZsZzwWviUizw5VLIlS" target="_blank" rel="noopener noreferrer"><span>SoundCloud</span><strong>NexMusic™</strong></a>
+            <a class="mini-link" href="https://youtube.com/@NexGenCorp" target="_blank" rel="noopener noreferrer"><span>Youtube</span><strong>@NexGenCorp</strong></a>
+          </div>
+          <div class="about-note">Rest is on our Linktr.ee!</div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="section-label">About</div>
+          <div class="about-list">
+            <div class="about-item"><span>© OpenStreetMap</span><strong>Data</strong></div>
+            <div class="about-item"><span>© OpenStreetMap Contributors</span><strong>Tiles</strong></div>
+            <div class="about-item"><span>Version</span><strong>v1.6.0</strong></div>
+            <div class="about-item"><span>Powered by</span><strong>OSM</strong></div>
+            <div class="about-item"><span>Made by</span><strong>NexGen Corp.</strong></div>
+          </div>
+          <div class="about-note">Global map views, location tools, and navigation built for quick OSM workflows.</div>
         </div>
 
         <div class="toolkit advanced-only">
@@ -854,6 +1075,22 @@
     </div>
   </div>
 
+  <div id="contributeModal" class="contribute-modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Choose Editor</span>
+        <button id="closeContributeModal" class="close-btn" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Select your preferred OpenStreetMap editor.</p>
+        <div class="contribute-options">
+          <button class="contribute-option" data-editor="vespucci" type="button">Vespucci</button>
+          <button class="contribute-option" data-editor="id" type="button">iD (OSM)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const mapEngineSelect = document.getElementById('mapEngine');
@@ -862,15 +1099,20 @@
     const themeSelect = document.getElementById('theme');
     const osmLinkBtn = document.getElementById('osmLinkBtn');
     const connectOsmBtn = document.getElementById('connectOsmBtn');
-    const locationBtn = document.getElementById('locationBtn');
-    const simpleLocationBtn = document.getElementById('simpleLocationBtn');
-    const advancedLocationBtn = document.getElementById('advancedLocationBtn');
-    const navBtn = document.getElementById('navBtn');
-    const contributeBtn = document.getElementById('contributeBtn');
+    const animationToggle = document.getElementById('animationToggle');
+    const gpsBtn = document.getElementById('gpsBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const pickStartBtn = document.getElementById('pickStartBtn');
+    const pickDestinationBtn = document.getElementById('pickDestinationBtn');
+    const routeBtn = document.getElementById('routeBtn');
+    const startLabel = document.getElementById('startLabel');
+    const destinationLabel = document.getElementById('destinationLabel');
     const modal = document.getElementById('authModal');
     const closeModal = document.getElementById('closeModal');
     const confirmLink = document.getElementById('confirmLink');
     const cancelLink = document.getElementById('cancelLink');
+    const contributeModal = document.getElementById('contributeModal');
+    const closeContributeModal = document.getElementById('closeContributeModal');
     const telemetryOutput = document.getElementById('telemetryOutput');
     const drawButtons = document.querySelectorAll('.tool-button');
 
@@ -879,10 +1121,12 @@
       attributionControl: true,
       fadeAnimation: true,
       zoomAnimation: true,
-      preferCanvas: true
+      preferCanvas: true,
+      minZoom: 2,
+      maxZoom: 19
     });
 
-    map.setView([44.7722, 17.1910], 12);
+    map.setView([20, 0], 2);
     L.control.scale({ position: 'bottomleft', maxWidth: 100 }).addTo(map);
     map.attributionControl.setPrefix(false);
     map.attributionControl.addAttribution('© OpenStreetMap');
@@ -900,6 +1144,18 @@
     let activeDrawTool = null;
     let drawPoints = [];
     let draftLayer = null;
+    let selectedPick = null;
+    let navigationStart = null;
+    let navigationDestination = null;
+    let startMarker = null;
+    let destinationMarker = null;
+    let routeLine = null;
+
+    function setAnimationState(enabled) {
+      document.body.classList.toggle('animations-off', !enabled);
+      document.body.classList.toggle('animations-on', enabled);
+      animationToggle.classList.toggle('on', enabled);
+    }
 
     function applyUiFramework() {
       const framework = uiFrameworkSelect.value;
@@ -1059,6 +1315,54 @@
       updateTelemetry();
     }
 
+    function formatCoords(lat, lng) {
+      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    function updateWaypointLabels() {
+      startLabel.textContent = navigationStart ? formatCoords(navigationStart[0], navigationStart[1]) : 'Not set';
+      destinationLabel.textContent = navigationDestination ? formatCoords(navigationDestination[0], navigationDestination[1]) : 'Not set';
+    }
+
+    function setRouteMarker(coords, type) {
+      const color = type === 'start' ? '#00df89' : '#ff5d7a';
+      const marker = L.circleMarker(coords, {
+        radius: 9,
+        color: '#ffffff',
+        weight: 2,
+        fillColor: color,
+        fillOpacity: 1
+      });
+      marker.bindPopup(type === 'start' ? 'Start point' : 'Destination');
+      marker.addTo(map);
+      return marker;
+    }
+
+    function updateRouteArtwork() {
+      if (startMarker) map.removeLayer(startMarker);
+      if (destinationMarker) map.removeLayer(destinationMarker);
+      if (routeLine) map.removeLayer(routeLine);
+
+      if (navigationStart) {
+        startMarker = setRouteMarker(navigationStart, 'start');
+      }
+      if (navigationDestination) {
+        destinationMarker = setRouteMarker(navigationDestination, 'destination');
+      }
+
+      if (navigationStart && navigationDestination) {
+        routeLine = L.polyline([navigationStart, navigationDestination], {
+          color: '#0070f3',
+          weight: 4,
+          opacity: 0.9,
+          dashArray: '8 10'
+        }).addTo(map);
+        map.fitBounds(L.latLngBounds([navigationStart, navigationDestination]), { padding: [50, 50] });
+      }
+
+      updateWaypointLabels();
+    }
+
     function moveToCurrentLocation() {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported by this browser.');
@@ -1067,8 +1371,13 @@
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          map.flyTo([latitude, longitude], 15, { duration: 1.8 });
+          const coords = [position.coords.latitude, position.coords.longitude];
+          map.flyTo(coords, 15, { duration: 1.8 });
+          if (!selectedPick) {
+            navigationStart = coords;
+            navigationDestination = navigationDestination || [coords[0] + 0.02, coords[1] + 0.02];
+          }
+          updateRouteArtwork();
         },
         () => {
           alert('Unable to access your current location.');
@@ -1081,14 +1390,41 @@
       );
     }
 
-    function openNavigation() {
-      const center = map.getCenter();
-      const url = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${center.lat},${center.lng};${center.lat + 0.01},${center.lng + 0.01}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+    function resetMapView() {
+      map.setView([20, 0], 2);
     }
 
-    function openContribution() {
-      window.open('https://openstreetmap.org/edit', '_blank', 'noopener,noreferrer');
+    function handleMapPick(latlng) {
+      if (!selectedPick) return;
+      const coords = [latlng.lat, latlng.lng];
+      if (selectedPick === 'start') {
+        navigationStart = coords;
+      } else if (selectedPick === 'destination') {
+        navigationDestination = coords;
+      }
+      updateRouteArtwork();
+      selectedPick = null;
+      pickStartBtn.classList.remove('active');
+      pickDestinationBtn.classList.remove('active');
+    }
+
+    function openNavigationRoute() {
+      if (!navigationStart || !navigationDestination) {
+        alert('Select start and destination points first.');
+        return;
+      }
+      const start = navigationStart;
+      const end = navigationDestination;
+      const routeUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${start[0]},${start[1]};${end[0]},${end[1]}`;
+      window.open(routeUrl, '_blank', 'noopener,noreferrer');
+    }
+
+    function openContributionChoice() {
+      contributeModal.classList.remove('hidden');
+    }
+
+    function closeContributionChoice() {
+      contributeModal.classList.add('hidden');
     }
 
     function showAuthModal() {
@@ -1108,11 +1444,49 @@
       alert('OpenStreetMap account linked successfully.');
     });
 
-    locationBtn.addEventListener('click', moveToCurrentLocation);
-    simpleLocationBtn.addEventListener('click', moveToCurrentLocation);
-    advancedLocationBtn.addEventListener('click', moveToCurrentLocation);
-    navBtn.addEventListener('click', openNavigation);
-    contributeBtn.addEventListener('click', openContribution);
+    animationToggle.addEventListener('click', () => {
+      const enabled = !document.body.classList.contains('animations-off');
+      setAnimationState(!enabled);
+    });
+
+    setAnimationState(true);
+
+    gpsBtn.addEventListener('click', moveToCurrentLocation);
+    zoomResetBtn.addEventListener('click', resetMapView);
+
+    pickStartBtn.addEventListener('click', () => {
+      selectedPick = 'start';
+      pickStartBtn.classList.add('active');
+      pickDestinationBtn.classList.remove('active');
+    });
+
+    pickDestinationBtn.addEventListener('click', () => {
+      selectedPick = 'destination';
+      pickDestinationBtn.classList.add('active');
+      pickStartBtn.classList.remove('active');
+    });
+
+    routeBtn.addEventListener('click', openNavigationRoute);
+
+    map.on('click', (event) => {
+      if (selectedPick) {
+        handleMapPick(event.latlng);
+      }
+    });
+
+    document.querySelectorAll('.contribute-option').forEach((button) => {
+      button.addEventListener('click', () => {
+        const choice = button.dataset.editor;
+        closeContributionChoice();
+        if (choice === 'vespucci') {
+          window.open('https://vespucci.io', '_blank', 'noopener,noreferrer');
+        } else {
+          window.open('https://openstreetmap.org/edit', '_blank', 'noopener,noreferrer');
+        }
+      });
+    });
+
+    document.getElementById('closeContributeModal').addEventListener('click', closeContributionChoice);
 
     mapEngineSelect.addEventListener('change', applyMapEngine);
     uiFrameworkSelect.addEventListener('change', applyUiFramework);
@@ -1120,6 +1494,7 @@
     themeSelect.addEventListener('change', applyTheme);
 
     map.on('move zoom', updateTelemetry);
+
     map.on('click', (event) => {
       if (!activeDrawTool) return;
       drawPoints.push([event.latlng.lat, event.latlng.lng]);
@@ -1142,11 +1517,20 @@
       });
     });
 
+    const contributeBtn = document.createElement('button');
+    contributeBtn.id = 'contributeBtn';
+    contributeBtn.type = 'button';
+    contributeBtn.className = 'link-button advanced-only';
+    contributeBtn.textContent = 'Contribute/Edit';
+    contributeBtn.addEventListener('click', openContributionChoice);
+    document.querySelector('.sidebar-card:nth-of-type(3)').appendChild(contributeBtn);
+
     applyUiFramework();
     applyTheme();
     applyComplexity();
     applyMapEngine();
     updateTelemetry();
+    updateRouteArtwork();
     if (map.hasLayer(osmLayer)) {
       map.addLayer(osmLayer);
     }
