@@ -1004,6 +1004,7 @@
               <div class="waypoint"><span>Destination</span><strong id="destinationLabel">Not set</strong></div>
             </div>
             <button id="routeBtn" class="link-button secondary" type="button">Build Route</button>
+            <button id="cancelRouteBtn" class="link-button secondary" type="button" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text);">Cancel Route Selection</button>
           </div>
         </div>
 
@@ -1105,6 +1106,7 @@
     const pickStartBtn = document.getElementById('pickStartBtn');
     const pickDestinationBtn = document.getElementById('pickDestinationBtn');
     const routeBtn = document.getElementById('routeBtn');
+    const cancelRouteBtn = document.getElementById('cancelRouteBtn');
     const startLabel = document.getElementById('startLabel');
     const destinationLabel = document.getElementById('destinationLabel');
     const modal = document.getElementById('authModal');
@@ -1363,6 +1365,21 @@
       updateWaypointLabels();
     }
 
+    function cancelRouteSelection() {
+      navigationStart = null;
+      navigationDestination = null;
+      selectedPick = null;
+      pickStartBtn.classList.remove('active');
+      pickDestinationBtn.classList.remove('active');
+      if (startMarker) map.removeLayer(startMarker);
+      if (destinationMarker) map.removeLayer(destinationMarker);
+      if (routeLine) map.removeLayer(routeLine);
+      startMarker = null;
+      destinationMarker = null;
+      routeLine = null;
+      updateWaypointLabels();
+    }
+
     function moveToCurrentLocation() {
       if (!navigator.geolocation) {
         alert('Geolocation is not supported by this browser.');
@@ -1453,6 +1470,7 @@
 
     gpsBtn.addEventListener('click', moveToCurrentLocation);
     zoomResetBtn.addEventListener('click', resetMapView);
+    cancelRouteBtn.addEventListener('click', cancelRouteSelection);
 
     pickStartBtn.addEventListener('click', () => {
       selectedPick = 'start';
