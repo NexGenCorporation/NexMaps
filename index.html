@@ -1,1557 +1,601 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NexMaps</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    :root {
-      --blue: #0070f3;
-      --blue-deep: #0056c9;
-      --green: #00df89;
-      --green-deep: #00b66d;
-      --bg-1: #07131d;
-      --bg-2: #0d1d2e;
-      --bg-3: #101d31;
-      --panel: rgba(13, 22, 34, 0.68);
-      --panel-strong: rgba(7, 16, 25, 0.92);
-      --text: #edf6ff;
-      --muted: #a9bfd7;
-      --outlined: rgba(139, 162, 190, 0.22);
-      --shadow: rgba(0, 0, 0, 0.42);
-      --surface-glow: rgba(0, 208, 137, 0.25);
-      --chip: rgba(0, 223, 137, 0.15);
-      --danger: #ff5d7a;
-      --success: var(--green);
-      --leaflet-pane: 0;
-      --switch-bg: rgba(255,255,255,0.08);
-      --switch-track: rgba(0,223,137,0.18);
-    }
-
-    body.theme-light {
-      --bg-1: #edf4ff;
-      --bg-2: #dfeeff;
-      --bg-3: #f6faff;
-      --panel: rgba(255, 255, 255, 0.72);
-      --panel-strong: rgba(255, 255, 255, 0.9);
-      --text: #0d1c2d;
-      --muted: #4e6278;
-      --outlined: rgba(28, 62, 110, 0.14);
-      --shadow: rgba(61, 90, 138, 0.14);
-      --surface-glow: rgba(0, 112, 243, 0.12);
-      --chip: rgba(0, 112, 243, 0.08);
-      --switch-bg: rgba(19, 39, 77, 0.06);
-      --switch-track: rgba(0, 112, 243, 0.12);
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(0, 112, 243, 0.25), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(0, 223, 137, 0.18), transparent 24%),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2) 46%, var(--bg-3));
-      color: var(--text);
-    }
-
-    body {
-      min-height: 100vh;
-      overflow: hidden;
-      transition: background 0.35s ease;
-    }
-
-    body.animations-off * {
-      animation: none !important;
-      transition: none !important;
-      scroll-behavior: auto !important;
-    }
-
-    .app-shell {
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      padding: 18px;
-      gap: 16px;
-    }
-
-    .panel {
-      position: relative;
-      background: var(--panel);
-      border: 1px solid var(--outlined);
-      box-shadow: 0 18px 48px var(--shadow);
-      border-radius: 22px;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      will-change: transform;
-      transition: all 0.28s ease;
-      overflow: hidden;
-      backdrop-filter: blur(16px) saturate(160%);
-      -webkit-backdrop-filter: blur(16px) saturate(160%);
-    }
-
-    body.ui-static .panel {
-      background: rgba(17, 24, 33, 0.98);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      border-radius: 0;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: none;
-      transform: none;
-      -webkit-transform: none;
-      will-change: auto;
-    }
-
-    body.theme-light.ui-static .panel {
-      background: rgba(255, 255, 255, 0.98);
-      border-color: rgba(17, 24, 33, 0.14);
-    }
-
-    .topbar {
-      min-height: 88px;
-      padding: 14px 18px 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.015)),
-        var(--panel);
-      animation: fadeSlideDown 0.45s ease;
-    }
-
-    body.ui-static .topbar {
-      background: rgba(10, 18, 24, 0.98);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      min-width: 0;
-    }
-
-    .brand-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .brand-mark {
-      width: 180px;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-    }
-
-    .brand-mark svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-      overflow: visible;
-      filter: drop-shadow(0 12px 18px rgba(0, 223, 137, 0.12));
-    }
-
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .brand-name {
-      font-size: clamp(1.4rem, 2vw, 2rem);
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      color: var(--text);
-      line-height: 1.1;
-    }
-
-    .brand-sub {
-      font-size: 0.72rem;
-      color: var(--muted);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .header-controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 6px;
-      min-width: 166px;
-    }
-
-    .field label {
-      font-size: 0.7rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    select {
-      width: 100%;
-      appearance: none;
-      -webkit-appearance: none;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
-        var(--panel-strong);
-      color: var(--text);
-      border: 1px solid var(--outlined);
-      border-radius: 12px;
-      padding: 10px 38px 10px 12px;
-      font-size: 0.92rem;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-      background-image:
-        linear-gradient(45deg, transparent 50%, var(--green) 50%),
-        linear-gradient(135deg, var(--green) 50%, transparent 50%),
-        linear-gradient(to right, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
-      background-position:
-        calc(100% - 18px) calc(1.05em + 2px),
-        calc(100% - 13px) calc(1.05em + 2px),
-        100% 0;
-      background-size: 5px 5px, 5px 5px, 2.5em 2.5em;
-      background-repeat: no-repeat;
-    }
-
-    body.ui-static select {
-      background: rgba(255,255,255,0.02);
-      border-radius: 0;
-      box-shadow: none;
-      border-color: rgba(255,255,255,0.1);
-      background-image: none;
-      padding-right: 12px;
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
-      gap: 16px;
-      flex: 1;
-      min-height: 0;
-    }
-
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 18px;
-      min-height: 0;
-      overflow-y: auto;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
-        var(--panel);
-    }
-
-    body.ui-static .sidebar {
-      background: rgba(12, 18, 24, 0.98);
-    }
-
-    .sidebar-card {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 14px 14px 16px;
-      border: 1px solid var(--outlined);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.02);
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-      animation: floatIn 0.5s ease;
-    }
-
-    body.ui-static .sidebar-card {
-      background: rgba(255,255,255,0.02);
-      border-radius: 0;
-    }
-
-    .section-label {
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .severity-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      align-self: flex-start;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(0, 223, 137, 0.18), rgba(0, 112, 243, 0.12));
-      color: var(--text);
-      border: 1px solid rgba(0, 223, 137, 0.28);
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 800;
-    }
-
-    .status-pill .dot {
-      width: 8px;
-      height: 8px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 18px rgba(0, 223, 137, 0.8);
-      display: block;
-    }
-
-    .link-button,
-    .tool-button,
-    .modal-actions button,
-    .toggle-button,
-    .nav-pick-btn {
-      appearance: none;
-      border: none;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 0.9rem;
-      transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .link-button {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 48px;
-      border-radius: 14px;
-      padding: 0 18px;
-      color: #041719;
-      background: linear-gradient(135deg, var(--green), #78ffca 55%, #bffcdd);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.4),
-        0 12px 24px rgba(0, 223, 137, 0.28);
-    }
-
-    .link-button.secondary,
-    .nav-pick-btn,
-    .toggle-button {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--text);
-    }
-
-    .link-button:hover,
-    .tool-button:hover,
-    .modal-actions button:hover,
-    .nav-pick-btn:hover,
-    .toggle-button:hover {
-      transform: translateY(-1px);
-      filter: brightness(1.04);
-    }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      border: 1px solid var(--outlined);
-      background: rgba(255,255,255,0.02);
-    }
-
-    .toggle-button {
-      position: relative;
-      width: 54px;
-      height: 30px;
-      border-radius: 999px;
-      background: var(--switch-bg);
-      padding: 0;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
-    }
-
-    .toggle-button::before {
-      content: "";
-      position: absolute;
-      top: 3px;
-      left: 4px;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, #eafcff, #c5d7e8);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: transform 0.2s ease;
-    }
-
-    .toggle-button.on {
-      background: linear-gradient(135deg, rgba(0,223,137,0.2), rgba(0,112,243,0.18));
-      border-color: rgba(0,223,137,0.32);
-    }
-
-    .toggle-button.on::before {
-      transform: translateX(24px);
-    }
-
-    .card-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .mini-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      text-decoration: none;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      color: var(--text);
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .mini-link:hover {
-      transform: translateX(2px);
-      border-color: rgba(0,223,137,0.28);
-    }
-
-    .mini-link span {
-      color: var(--muted);
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-weight: 800;
-    }
-
-    .mini-link strong {
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .about-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .about-item {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      border-radius: 10px;
-      padding: 8px 10px;
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.05);
-      color: var(--muted);
-      font-size: 0.76rem;
-    }
-
-    .about-item strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .about-note {
-      color: var(--muted);
-      font-size: 0.76rem;
-      line-height: 1.5;
-      padding-top: 4px;
-    }
-
-    .map-panel {
-      position: relative;
-      min-height: 0;
-      overflow: hidden;
-      background: rgba(10, 17, 24, 0.8);
-    }
-
-    #map {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background: #dfe9ef;
-    }
-
-    .leaflet-container {
-      background: #dfe9ef;
-      font: inherit;
-    }
-
-    .leaflet-control-zoom a {
-      background: rgba(10, 18, 24, 0.75);
-      color: var(--text);
-      border-color: rgba(255,255,255,0.08);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-
-    .leaflet-control-attribution {
-      background: rgba(16, 27, 36, 0.78) !important;
-      border-radius: 10px 0 0 0 !important;
-      border: 1px solid rgba(255,255,255,0.08) !important;
-      padding: 4px 8px !important;
-      color: #dfeaf5 !important;
-      font-size: 11px !important;
-    }
-
-    .leaflet-control-attribution a {
-      color: #8fdbff !important;
-    }
-
-    .map-overlay {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      z-index: 500;
-      pointer-events: none;
-    }
-
-    .map-status-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(14, 20, 28, 0.72);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--text);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      font-size: 0.76rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      font-weight: 800;
-    }
-
-    .toolkit {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding: 14px;
-      border: 1px solid var(--outlined);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.02);
-    }
-
-    .toolkit-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-size: 0.68rem;
-      color: var(--muted);
-    }
-
-    .tool-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .tool-button {
-      min-height: 42px;
-      border-radius: 12px;
-      padding: 0 10px;
-      color: var(--text);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
-      border: 1px solid var(--outlined);
-    }
-
-    .tool-button.active {
-      border-color: rgba(0, 223, 137, 0.52);
-      background: linear-gradient(135deg, rgba(0, 223, 137, 0.18), rgba(0, 112, 243, 0.1));
-      box-shadow: inset 0 0 18px rgba(0, 223, 137, 0.14);
-    }
-
-    .tool-button.danger {
-      color: #ffe7ec;
-      background: linear-gradient(180deg, rgba(255, 93, 122, 0.22), rgba(255, 93, 122, 0.08));
-      border-color: rgba(255, 93, 122, 0.35);
-    }
-
-    .helper-text {
-      font-size: 0.77rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .nav-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--outlined);
-    }
-
-    .nav-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-    }
-
-    .nav-pick-btn {
-      min-height: 40px;
-      border-radius: 10px;
-      padding: 0 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      color: var(--text);
-    }
-
-    .nav-pick-btn.active {
-      background: linear-gradient(135deg, rgba(0,223,137,0.18), rgba(0,112,243,0.10));
-      border-color: rgba(0,223,137,0.36);
-    }
-
-    .waypoints {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-
-    .waypoint {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.02);
-      padding: 8px 9px;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .waypoint strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .telemetry {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 14px;
-      border: 1px solid var(--outlined);
-      border-radius: 18px;
-      background: rgba(5, 10, 14, 0.4);
-    }
-
-    .telemetry-header {
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    #telemetryOutput {
-      margin: 0;
-      padding: 12px;
-      border-radius: 12px;
-      background: rgba(2, 12, 18, 0.76);
-      border: 1px solid rgba(0, 223, 137, 0.18);
-      color: #d8ffe9;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-      font-size: 0.74rem;
-      line-height: 1.6;
-      white-space: pre-wrap;
-      word-break: break-word;
-      min-height: 140px;
-    }
-
-    .auth-modal,
-    .contribute-modal {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(4, 10, 19, 0.56);
-      z-index: 2000;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    .auth-modal.hidden,
-    .contribute-modal.hidden {
-      display: none;
-    }
-
-    .modal-card {
-      width: min(440px, calc(100vw - 32px));
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.09);
-      background: rgba(10, 18, 26, 0.94);
-      box-shadow: 0 22px 50px rgba(0,0,0,0.32);
-      overflow: hidden;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      font-weight: 800;
-      letter-spacing: 0.04em;
-    }
-
-    .close-btn {
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-size: 1.8rem;
-      line-height: 1;
-      cursor: pointer;
-      padding: 0 4px;
-    }
-
-    .modal-body {
-      padding: 18px;
-      color: var(--text);
-    }
-
-    .modal-body p {
-      margin: 0 0 14px;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .modal-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(0, 223, 137, 0.12);
-      border: 1px solid rgba(0, 223, 137, 0.24);
-      color: #dffef0;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: 0.7rem;
-    }
-
-    .modal-status::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 12px rgba(0, 223, 137, 0.8);
-    }
-
-    .contribute-options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .contribute-option {
-      padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      text-align: left;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      padding: 0 18px 18px;
-    }
-
-    .modal-actions button {
-      min-height: 42px;
-      padding: 0 16px;
-      border-radius: 12px;
-      color: var(--text);
-    }
-
-    .modal-actions button:first-child {
-      background: linear-gradient(135deg, var(--green), #7cffca);
-      color: #021d12;
-      box-shadow: 0 13px 24px rgba(0, 223, 137, 0.22);
-    }
-
-    .modal-actions .secondary {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: var(--text);
-    }
-
-    .easy-only,
-    .simple-only,
-    .advanced-only {
-      display: none;
-    }
-
-    body.complexity-easy .easy-only { display: flex; }
-    body.complexity-simple .simple-only { display: flex; }
-    body.complexity-advanced .advanced-only { display: flex; }
-
-    body.complexity-easy .simple-only,
-    body.complexity-easy .advanced-only { display: none; }
-    body.complexity-simple .easy-only,
-    body.complexity-simple .advanced-only { display: none; }
-    body.complexity-advanced .easy-only,
-    body.complexity-advanced .simple-only { display: none; }
-
-    @keyframes fadeSlideDown {
-      from { opacity: 0; transform: translateY(-12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes floatIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 920px) {
-      body { overflow: auto; }
-      .app-shell {
-        padding: 12px;
-        height: auto;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexMaps</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      :root {
+        --bg-1: #07131d;
+        --bg-2: #0d1d2e;
+        --bg-3: #101d31;
+        --panel: rgba(12, 22, 34, 0.74);
+        --panel-strong: rgba(7, 16, 25, 0.9);
+        --text: #edf6ff;
+        --muted: #a9bfd7;
+        --outlined: rgba(139, 162, 190, 0.22);
+        --shadow: rgba(0, 0, 0, 0.42);
+        --green: #00df89;
+        --green-deep: #00b66d;
+        --blue: #0070f3;
+        --blue-deep: #0056c9;
+        --danger: #ff5d7a;
+        --switch-bg: rgba(255,255,255,0.08);
+        --switch-track: rgba(0,223,137,0.18);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, var(--bg-1), var(--bg-2) 46%, var(--bg-3));
+        color: var(--text);
+      }
+
+      body {
         min-height: 100vh;
+        overflow: hidden;
       }
 
-      .workspace {
-        grid-template-columns: 1fr;
+      body.animations-off *,
+      body.animations-off *::before,
+      body.animations-off *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
       }
+
+      body.ui-compact .menu-card,
+      body.ui-compact .settings-card,
+      body.ui-compact .site-card {
+        padding: 12px 12px 14px;
+      }
+
+      #map {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        background: #dfe9ef;
+      }
+
+      .leaflet-container {
+        background: #dfe9ef;
+        font: inherit;
+      }
+
+      .leaflet-control-attribution {
+        background: rgba(16, 27, 36, 0.78) !important;
+        border-radius: 10px 0 0 0 !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        padding: 4px 8px !important;
+        color: #dfeaf5 !important;
+        font-size: 11px !important;
+      }
+
+      .leaflet-control-attribution a {
+        color: #8fdbff !important;
+      }
+
+      .leaflet-control-zoom a {
+        background: rgba(10, 18, 24, 0.74);
+        color: var(--text);
+        border-color: rgba(255,255,255,0.08);
+      }
+
+      .menu-toggle {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        width: 52px;
+        height: 52px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 16px;
+        background: rgba(8, 16, 24, 0.72);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 30;
+      }
+
+      .menu-toggle span,
+      .menu-toggle span::before,
+      .menu-toggle span::after {
+        display: block;
+        position: relative;
+        width: 18px;
+        height: 2px;
+        background: var(--text);
+        border-radius: 999px;
+      }
+
+      .menu-toggle span::before,
+      .menu-toggle span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+      }
+
+      .menu-toggle span::before { top: -6px; }
+      .menu-toggle span::after { top: 6px; }
 
       .sidebar {
-        order: 2;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(340px, 82vw);
+        padding: 18px 16px 18px 16px;
+        background: rgba(11, 19, 28, 0.84);
+        backdrop-filter: blur(18px) saturate(140%);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        border-right: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+        transform: translateX(-103%);
+        transition: transform 0.28s ease;
+        z-index: 25;
+        overflow-y: auto;
       }
 
-      .map-panel {
-        min-height: 420px;
+      .sidebar.open {
+        transform: translateX(0);
       }
 
-      .topbar {
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 8px 4px 18px;
+      }
+
+      .logo-badge {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(0,223,137,0.28), rgba(0,112,243,0.18));
+        border: 1px solid rgba(0,223,137,0.28);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.2rem;
+        color: var(--green);
+        box-shadow: inset 0 0 20px rgba(0,223,137,0.18);
+      }
+
+      .brand-meta {
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
-        padding: 14px 14px 12px;
+        gap: 4px;
       }
 
-      .header-controls {
-        justify-content: stretch;
-        width: 100%;
-      }
-
-      .field {
-        flex: 1 1 160px;
-      }
-    }
-
-    @media (max-width: 540px) {
-      .brand-mark {
-        width: 150px;
-        height: 72px;
+      .brand-name {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
       }
 
       .brand-sub {
-        letter-spacing: 0.06em;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.12em;
       }
 
-      .header-controls {
+      .drawer-nav {
+        display: grid;
+        gap: 10px;
+        margin: 8px 0 18px;
+      }
+
+      .nav-item {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02);
+        color: var(--text);
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 13px 14px;
+        border-radius: 12px;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .nav-item:hover {
+        transform: translateX(2px);
+        border-color: rgba(0,223,137,0.28);
+      }
+
+      .nav-item.active {
+        background: linear-gradient(135deg, rgba(0,223,137,0.18), rgba(0,112,243,0.12));
+        border-color: rgba(0,223,137,0.32);
+      }
+
+      .page-panel {
+        display: none;
         flex-direction: column;
+        gap: 14px;
       }
 
-      .field {
+      .page-panel.active {
+        display: flex;
+      }
+
+      .menu-card,
+      .settings-card,
+      .site-card {
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02);
+        border-radius: 16px;
+        padding: 14px 14px 16px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      }
+
+      .panel-label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+
+      .site-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .site-card strong {
+        font-size: 0.96rem;
+        letter-spacing: 0.02em;
+      }
+
+      .site-card span {
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+
+      .link-row {
+        margin-top: 4px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .mini-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text);
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .settings-card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+
+      .setting-row:last-child {
+        border-bottom: none;
+      }
+
+      .setting-row label {
+        font-size: 0.82rem;
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .toggle-control {
+        position: relative;
+        width: 52px;
+        height: 30px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: var(--switch-bg);
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .toggle-control::before {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #effaff, #cad8ea);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+        transition: transform 0.2s ease;
+      }
+
+      .toggle-control.on {
+        background: linear-gradient(135deg, rgba(0,223,137,0.2), rgba(0,112,243,0.18));
+        border-color: rgba(0,223,137,0.32);
+      }
+
+      .toggle-control.on::before {
+        transform: translateX(22px);
+      }
+
+      select {
         width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        outline: none;
       }
 
-      .tool-row,
-      .nav-row {
-        grid-template-columns: 1fr 1fr;
+      .about-body {
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 0.82rem;
       }
-    }
-  </style>
-</head>
-<body class="theme-dark ui-liquid complexity-simple animations-on">
-  <div class="app-shell">
-    <header class="topbar panel">
+
+      .locate-button {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        width: 54px;
+        height: 54px;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 18px;
+        background: rgba(10, 18, 26, 0.78);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 16px 32px rgba(0,0,0,0.26);
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .locate-button img {
+        width: 28px;
+        height: 28px;
+        display: block;
+        filter: drop-shadow(0 4px 10px rgba(0,223,137,0.24));
+      }
+
+      @media (max-width: 640px) {
+        .sidebar {
+          width: min(88vw, 320px);
+        }
+      }
+    </style>
+  </head>
+  <body class="theme-dark animations-on">
+    <div id="map" aria-label="Map"></div>
+
+    <button id="menuToggle" class="menu-toggle" aria-label="Open menu" type="button">
+      <span aria-hidden="true"></span>
+    </button>
+
+    <aside id="sidebar" class="sidebar" aria-label="Sidebar menu">
       <div class="brand">
-        <a class="brand-link" href="https://nxgcorp.dpdns.org" aria-label="Go to NexGen Corp website">
-          <div class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 320 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NexGen logo">
-              <g>
-                <rect x="110" y="36" width="138" height="46" rx="10" fill="#00df89"/>
-                <text x="127" y="68" font-size="24" font-weight="900" fill="#061d18" font-family="Segoe UI, Arial, sans-serif" letter-spacing="4">N·E·X</text>
-                <text x="0" y="78" font-size="92" font-weight="800" fill="#2f6ea8" font-family="Segoe UI, Arial, sans-serif" letter-spacing="-6">Gen</text>
-              </g>
-            </svg>
-          </div>
-          <div class="brand-text">
-            <div class="brand-name">NexMaps™</div>
-            <div class="brand-sub">NexGen Corp</div>
-          </div>
-        </a>
-      </div>
-
-      <div class="header-controls">
-        <div class="field">
-          <label for="uiFramework">UI Framework</label>
-          <select id="uiFramework">
-            <option value="liquid">Lightweight Liquid Glass UI</option>
-            <option value="classic">Classic Static Core UI</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="mapEngine">Map Engine</label>
-          <select id="mapEngine">
-            <option value="osm">Standard OpenStreetMap Core</option>
-            <option value="sat">Global Satellite Imagery Engine</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="complexity">Operational Complexity</label>
-          <select id="complexity">
-            <option value="easy">Easy Mode</option>
-            <option value="simple" selected>Simple Mode</option>
-            <option value="advanced">Advanced Mode</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="theme">Theme</label>
-          <select id="theme">
-            <option value="dark" selected>Dark Theme</option>
-            <option value="light">Light Theme</option>
-          </select>
+        <div class="logo-badge">N</div>
+        <div class="brand-meta">
+          <div class="brand-name">NexMaps</div>
+          <div class="brand-sub">NexGen Corp</div>
         </div>
       </div>
-    </header>
 
-    <div class="workspace">
-      <aside class="sidebar panel">
-        <div class="sidebar-card">
-          <div class="section-label">Core Status</div>
-          <div class="status-pill easy-only">
-            <span class="dot"></span>
-            <span>System Online</span>
-          </div>
-          <div class="severity-row simple-only">
-            <span class="dot" style="width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 18px rgba(0,223,137,.8); display:inline-block;"></span>
-            <span style="font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.72rem; color:var(--muted);">System Status</span>
-          </div>
+      <nav class="drawer-nav" aria-label="Main menu">
+        <button class="nav-item active" data-page="websites" type="button">Our Websites</button>
+        <button class="nav-item" data-page="settings" type="button">Settings</button>
+        <button class="nav-item" data-page="about" type="button">About</button>
+      </nav>
 
-          <div class="section-label simple-only" style="margin-top:2px;">Authorization</div>
-          <button id="osmLinkBtn" class="link-button simple-only" type="button">Link OpenStreetMap Profile</button>
-          <button id="connectOsmBtn" class="link-button easy-only" type="button">Connect OpenStreetMap Account</button>
-
-          <div class="toggle-row">
-            <span style="font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.65rem; color:var(--muted);">Animations</span>
-            <button id="animationToggle" class="toggle-button on" type="button" aria-label="Toggle animations"></button>
-          </div>
-        </div>
-
-        <div class="sidebar-card">
-          <div class="section-label">Location</div>
-          <div class="nav-panel">
-            <div class="nav-row">
-              <button class="nav-pick-btn" id="pickStartBtn" type="button">Pick Start</button>
-              <button class="nav-pick-btn" id="pickDestinationBtn" type="button">Pick Destination</button>
+      <section class="page-panel active" data-panel="websites">
+        <div class="menu-card">
+          <span class="panel-label">Quick Links</span>
+          <div class="site-card">
+            <strong>NexGen Corporate</strong>
+            <span>Official company site and product updates.</span>
+            <div class="link-row">
+              <a class="mini-link" href="https://nxgcorp.dpdns.org" target="_blank" rel="noreferrer">Open</a>
             </div>
-            <div class="nav-row">
-              <button class="nav-pick-btn" id="gpsBtn" type="button">My Location</button>
-              <button class="nav-pick-btn" id="zoomResetBtn" type="button">Reset View</button>
+          </div>
+        </div>
+
+        <div class="menu-card">
+          <div class="site-card">
+            <strong>NexMaps</strong>
+            <span>Explore the map and location features in a fullscreen map experience.</span>
+            <div class="link-row">
+              <a class="mini-link" href="#" aria-disabled="true">Map</a>
             </div>
-            <div class="waypoints">
-              <div class="waypoint"><span>Start</span><strong id="startLabel">Not set</strong></div>
-              <div class="waypoint"><span>Destination</span><strong id="destinationLabel">Not set</strong></div>
-            </div>
-            <button id="routeBtn" class="link-button secondary" type="button">Build Route</button>
-            <button id="cancelRouteBtn" class="link-button secondary" type="button" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text);">Cancel Route Selection</button>
           </div>
         </div>
+      </section>
 
-        <div class="sidebar-card">
-          <div class="section-label">Our Websites</div>
-          <div class="card-list">
-            <a class="mini-link" href="https://linktr.ee/nxgcorp" target="_blank" rel="noopener noreferrer"><span>Linktr.ee</span><strong>nxgcorp</strong></a>
-            <a class="mini-link" href="https://nxgcorp.dpdns.org" target="_blank" rel="noopener noreferrer"><span>Website</span><strong>NexGen Corp</strong></a>
-            <a class="mini-link" href="https://on.soundcloud.com/ZsZzwWviUizw5VLIlS" target="_blank" rel="noopener noreferrer"><span>SoundCloud</span><strong>NexMusic™</strong></a>
-            <a class="mini-link" href="https://youtube.com/@NexGenCorp" target="_blank" rel="noopener noreferrer"><span>Youtube</span><strong>@NexGenCorp</strong></a>
+      <section class="page-panel" data-panel="settings">
+        <div class="settings-card">
+          <span class="panel-label">Preferences</span>
+
+          <div class="setting-row">
+            <label for="animationsToggle">Animations</label>
+            <button id="animationsToggle" class="toggle-control on" type="button" aria-label="Toggle animations"></button>
           </div>
-          <div class="about-note">Rest is on our Linktr.ee!</div>
-        </div>
 
-        <div class="sidebar-card">
-          <div class="section-label">About</div>
-          <div class="about-list">
-            <div class="about-item"><span>© OpenStreetMap</span><strong>Data</strong></div>
-            <div class="about-item"><span>© OpenStreetMap Contributors</span><strong>Tiles</strong></div>
-            <div class="about-item"><span>Version</span><strong>v1.6.0</strong></div>
-            <div class="about-item"><span>Powered by</span><strong>OSM</strong></div>
-            <div class="about-item"><span>Made by</span><strong>NexGen Corp.</strong></div>
+          <div class="setting-row">
+            <label for="imagerySelect">Imagery</label>
           </div>
-          <div class="about-note">Global map views, location tools, and navigation built for quick OSM workflows.</div>
-        </div>
+          <select id="imagerySelect">
+            <option value="normal">Normal Maps</option>
+            <option value="satellite">Satellite</option>
+          </select>
 
-        <div class="toolkit advanced-only">
-          <div class="toolkit-header">
-            <span>Mapping Toolkit</span>
+          <div class="setting-row">
+            <label for="uiModeSelect">UI Settings</label>
           </div>
-          <div class="tool-row">
-            <button class="tool-button" data-tool="track" type="button">Track</button>
-            <button class="tool-button" data-tool="line" type="button">Line</button>
-            <button class="tool-button" data-tool="polygon" type="button">Geometry</button>
-            <button class="tool-button danger" data-tool="clear" type="button">Clear</button>
+          <select id="uiModeSelect">
+            <option value="standard">Standard View</option>
+            <option value="compact">Compact View</option>
+            <option value="glass">Glass UI</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="page-panel" data-panel="about">
+        <div class="menu-card">
+          <span class="panel-label">About</span>
+          <div class="about-body">
+            NexMaps is built for fast navigation, location awareness, and a clean map-first experience. This app focuses on a streamlined interface with quick access to map settings and nearby location tools.
           </div>
-          <div class="helper-text">Click on the map to place points. Double-click to finalize the outline.</div>
         </div>
+      </section>
+    </aside>
 
-        <div class="telemetry advanced-only">
-          <div class="telemetry-header">Diagnostics</div>
-          <pre id="telemetryOutput"></pre>
-        </div>
-      </aside>
+    <button id="locateBtn" class="locate-button" type="button" aria-label="Go to my location">
+      <img src="./image.svg" alt="My location icon" />
+    </button>
 
-      <main class="map-panel panel">
-        <div id="map"></div>
-        <div class="map-overlay easy-only">
-          <div class="map-status-chip"><span class="dot" style="width:8px;height:8px;display:inline-block;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(0,223,137,.8);"></span>System Ready</div>
-        </div>
-      </main>
-    </div>
-  </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('menuToggle');
+      const navButtons = document.querySelectorAll('.nav-item');
+      const panels = document.querySelectorAll('.page-panel');
+      const animationsToggle = document.getElementById('animationsToggle');
+      const imagerySelect = document.getElementById('imagerySelect');
+      const uiModeSelect = document.getElementById('uiModeSelect');
+      const locateBtn = document.getElementById('locateBtn');
 
-  <div id="authModal" class="auth-modal hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <span>OpenStreetMap Authorization Check</span>
-        <button id="closeModal" class="close-btn" aria-label="Close">×</button>
-      </div>
-      <div class="modal-body">
-        <p>Securely linking your OpenStreetMap profile with NexMaps for route, layer, and profile integration.</p>
-        <div class="modal-status">Authorization status: verified</div>
-      </div>
-      <div class="modal-actions">
-        <button id="confirmLink" type="button">Confirm</button>
-        <button id="cancelLink" class="secondary" type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
+      menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+      });
 
-  <div id="contributeModal" class="contribute-modal hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <span>Choose Editor</span>
-        <button id="closeContributeModal" class="close-btn" aria-label="Close">×</button>
-      </div>
-      <div class="modal-body">
-        <p>Select your preferred OpenStreetMap editor.</p>
-        <div class="contribute-options">
-          <button class="contribute-option" data-editor="vespucci" type="button">Vespucci</button>
-          <button class="contribute-option" data-editor="id" type="button">iD (OSM)</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const mapEngineSelect = document.getElementById('mapEngine');
-    const uiFrameworkSelect = document.getElementById('uiFramework');
-    const complexitySelect = document.getElementById('complexity');
-    const themeSelect = document.getElementById('theme');
-    const osmLinkBtn = document.getElementById('osmLinkBtn');
-    const connectOsmBtn = document.getElementById('connectOsmBtn');
-    const animationToggle = document.getElementById('animationToggle');
-    const gpsBtn = document.getElementById('gpsBtn');
-    const zoomResetBtn = document.getElementById('zoomResetBtn');
-    const pickStartBtn = document.getElementById('pickStartBtn');
-    const pickDestinationBtn = document.getElementById('pickDestinationBtn');
-    const routeBtn = document.getElementById('routeBtn');
-    const cancelRouteBtn = document.getElementById('cancelRouteBtn');
-    const startLabel = document.getElementById('startLabel');
-    const destinationLabel = document.getElementById('destinationLabel');
-    const modal = document.getElementById('authModal');
-    const closeModal = document.getElementById('closeModal');
-    const confirmLink = document.getElementById('confirmLink');
-    const cancelLink = document.getElementById('cancelLink');
-    const contributeModal = document.getElementById('contributeModal');
-    const closeContributeModal = document.getElementById('closeContributeModal');
-    const telemetryOutput = document.getElementById('telemetryOutput');
-    const drawButtons = document.querySelectorAll('.tool-button');
-
-    const map = L.map('map', {
-      zoomControl: true,
-      attributionControl: true,
-      fadeAnimation: true,
-      zoomAnimation: true,
-      preferCanvas: true,
-      minZoom: 2,
-      maxZoom: 19
-    });
-
-    map.setView([20, 0], 2);
-    L.control.scale({ position: 'bottomleft', maxWidth: 100 }).addTo(map);
-    map.attributionControl.setPrefix(false);
-    map.attributionControl.addAttribution('© OpenStreetMap');
-    map.attributionControl.addAttribution('© OpenStreetMap Contributors');
-
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    });
-
-    const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '© OpenStreetMap Contributors'
-    });
-
-    const drawnLayer = L.layerGroup().addTo(map);
-    let activeDrawTool = null;
-    let drawPoints = [];
-    let draftLayer = null;
-    let selectedPick = null;
-    let navigationStart = null;
-    let navigationDestination = null;
-    let startMarker = null;
-    let destinationMarker = null;
-    let routeLine = null;
-
-    function setAnimationState(enabled) {
-      document.body.classList.toggle('animations-off', !enabled);
-      document.body.classList.toggle('animations-on', enabled);
-      animationToggle.classList.toggle('on', enabled);
-    }
-
-    function applyUiFramework() {
-      const framework = uiFrameworkSelect.value;
-      document.body.classList.toggle('ui-liquid', framework === 'liquid');
-      document.body.classList.toggle('ui-static', framework === 'classic');
-    }
-
-    function applyTheme() {
-      const mode = themeSelect.value;
-      document.body.classList.toggle('theme-dark', mode === 'dark');
-      document.body.classList.toggle('theme-light', mode === 'light');
-    }
-
-    function applyComplexity() {
-      const mode = complexitySelect.value;
-      document.body.classList.toggle('complexity-easy', mode === 'easy');
-      document.body.classList.toggle('complexity-simple', mode === 'simple');
-      document.body.classList.toggle('complexity-advanced', mode === 'advanced');
-    }
-
-    function applyMapEngine() {
-      const engine = mapEngineSelect.value;
-      if (engine === 'osm') {
-        if (!map.hasLayer(osmLayer)) {
-          map.addLayer(osmLayer);
-        }
-        if (map.hasLayer(satLayer)) {
-          map.removeLayer(satLayer);
-        }
-      } else if (engine === 'sat') {
-        if (!map.hasLayer(satLayer)) {
-          map.addLayer(satLayer);
-        }
-        if (map.hasLayer(osmLayer)) {
-          map.removeLayer(osmLayer);
-        }
-      }
-      updateTelemetry();
-    }
-
-    function updateTelemetry() {
-      const center = map.getCenter();
-      const zoom = map.getZoom();
-      const engine = mapEngineSelect.options[mapEngineSelect.selectedIndex].text;
-      const theme = themeSelect.options[themeSelect.selectedIndex].text;
-      const framework = uiFrameworkSelect.options[uiFrameworkSelect.selectedIndex].text;
-      const complexity = complexitySelect.options[complexitySelect.selectedIndex].text;
-      const shapeCount = drawnLayer.getLayers().length;
-      const drawState = activeDrawTool ? activeDrawTool : 'idle';
-
-      telemetryOutput.textContent =
-        'NexMaps™ Telemetry\n' +
-        '====================\n' +
-        'Canvas Center: ' + center.lat.toFixed(4) + ', ' + center.lng.toFixed(4) + '\n' +
-        'Zoom Level: ' + zoom + '\n' +
-        'Map Engine: ' + engine + '\n' +
-        'Theme Mode: ' + theme + '\n' +
-        'Framework: ' + framework + '\n' +
-        'Mode: ' + complexity + '\n' +
-        'Draw Tool: ' + drawState + '\n' +
-        'Stored Geometries: ' + shapeCount + '\n' +
-        'Tile Layer: ' + (map.hasLayer(satLayer) ? 'Global Satellite Imagery Engine' : 'Standard OpenStreetMap Core');
-    }
-
-    function clearDraft() {
-      if (draftLayer) {
-        drawnLayer.removeLayer(draftLayer);
-        draftLayer = null;
-      }
-      drawPoints = [];
-    }
-
-    function finalizeShape() {
-      if (!drawPoints || drawPoints.length < 2) {
-        clearDraft();
-        return;
-      }
-
-      if (activeDrawTool === 'track' || activeDrawTool === 'line') {
-        const line = L.polyline(drawPoints, {
-          color: '#00df89',
-          weight: 3,
-          opacity: 0.95
-        }).addTo(drawnLayer);
-        line.bindPopup(activeDrawTool === 'track' ? 'Track' : 'Line');
-      }
-
-      if (activeDrawTool === 'polygon') {
-        if (drawPoints.length >= 3) {
-          const polygon = L.polygon(drawPoints, {
-            color: '#0070f3',
-            fillColor: '#0070f3',
-            fillOpacity: 0.25,
-            weight: 2
-          }).addTo(drawnLayer);
-          polygon.bindPopup('Geometry');
-        } else {
-          clearDraft();
-        }
-      }
-
-      clearDraft();
-      activeDrawTool = null;
-      drawButtons.forEach((button) => button.classList.remove('active'));
-      updateTelemetry();
-    }
-
-    function renderDraft() {
-      if (draftLayer) {
-        drawnLayer.removeLayer(draftLayer);
-      }
-
-      if (drawPoints.length < 1) {
-        draftLayer = null;
-        return;
-      }
-
-      const baseStyle = {
-        color: '#00df89',
-        weight: 3,
-        opacity: 0.9,
-        fillOpacity: 0.18
-      };
-
-      if (activeDrawTool === 'polygon') {
-        draftLayer = L.polygon(drawPoints, {
-          ...baseStyle,
-          color: '#0070f3',
-          fillColor: '#0070f3'
+      navButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          navButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+          const page = button.dataset.page;
+          panels.forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === page);
+          });
         });
-      } else {
-        draftLayer = L.polyline(drawPoints, baseStyle);
-      }
-
-      draftLayer.addTo(drawnLayer);
-    }
-
-    function activateDrawTool(tool) {
-      if (tool === 'clear') {
-        activeDrawTool = null;
-        drawButtons.forEach((button) => button.classList.remove('active'));
-        drawnLayer.clearLayers();
-        clearDraft();
-        updateTelemetry();
-        return;
-      }
-
-      activeDrawTool = tool;
-      drawButtons.forEach((button) => {
-        button.classList.toggle('active', button.dataset.tool === tool);
       });
 
-      if (!tool) {
-        clearDraft();
-      }
-
-      updateTelemetry();
-    }
-
-    function formatCoords(lat, lng) {
-      return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    }
-
-    function updateWaypointLabels() {
-      startLabel.textContent = navigationStart ? formatCoords(navigationStart[0], navigationStart[1]) : 'Not set';
-      destinationLabel.textContent = navigationDestination ? formatCoords(navigationDestination[0], navigationDestination[1]) : 'Not set';
-    }
-
-    function setRouteMarker(coords, type) {
-      const color = type === 'start' ? '#00df89' : '#ff5d7a';
-      const marker = L.circleMarker(coords, {
-        radius: 9,
-        color: '#ffffff',
-        weight: 2,
-        fillColor: color,
-        fillOpacity: 1
+      animationsToggle.addEventListener('click', () => {
+        const on = animationsToggle.classList.toggle('on');
+        document.body.classList.toggle('animations-off', !on);
       });
-      marker.bindPopup(type === 'start' ? 'Start point' : 'Destination');
-      marker.addTo(map);
-      return marker;
-    }
 
-    function updateRouteArtwork() {
-      if (startMarker) map.removeLayer(startMarker);
-      if (destinationMarker) map.removeLayer(destinationMarker);
-      if (routeLine) map.removeLayer(routeLine);
-
-      if (navigationStart) {
-        startMarker = setRouteMarker(navigationStart, 'start');
-      }
-      if (navigationDestination) {
-        destinationMarker = setRouteMarker(navigationDestination, 'destination');
-      }
-
-      if (navigationStart && navigationDestination) {
-        routeLine = L.polyline([navigationStart, navigationDestination], {
-          color: '#0070f3',
-          weight: 4,
-          opacity: 0.9,
-          dashArray: '8 10'
-        }).addTo(map);
-        map.fitBounds(L.latLngBounds([navigationStart, navigationDestination]), { padding: [50, 50] });
-      }
-
-      updateWaypointLabels();
-    }
-
-    function cancelRouteSelection() {
-      navigationStart = null;
-      navigationDestination = null;
-      selectedPick = null;
-      pickStartBtn.classList.remove('active');
-      pickDestinationBtn.classList.remove('active');
-      if (startMarker) map.removeLayer(startMarker);
-      if (destinationMarker) map.removeLayer(destinationMarker);
-      if (routeLine) map.removeLayer(routeLine);
-      startMarker = null;
-      destinationMarker = null;
-      routeLine = null;
-      updateWaypointLabels();
-    }
-
-    function moveToCurrentLocation() {
-      if (!navigator.geolocation) {
-        alert('Geolocation is not supported by this browser.');
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = [position.coords.latitude, position.coords.longitude];
-          map.flyTo(coords, 15, { duration: 1.8 });
-          if (!selectedPick) {
-            navigationStart = coords;
-            navigationDestination = navigationDestination || [coords[0] + 0.02, coords[1] + 0.02];
+      imagerySelect.addEventListener('change', (event) => {
+        const value = event.target.value;
+        if (value === 'satellite') {
+          if (!window.satelliteLayer) {
+            window.satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+              maxZoom: 19,
+              attribution: 'Tiles &copy; Esri'
+            });
           }
-          updateRouteArtwork();
-        },
-        () => {
-          alert('Unable to access your current location.');
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    }
-
-    function resetMapView() {
-      map.setView([20, 0], 2);
-    }
-
-    function handleMapPick(latlng) {
-      if (!selectedPick) return;
-      const coords = [latlng.lat, latlng.lng];
-      if (selectedPick === 'start') {
-        navigationStart = coords;
-      } else if (selectedPick === 'destination') {
-        navigationDestination = coords;
-      }
-      updateRouteArtwork();
-      selectedPick = null;
-      pickStartBtn.classList.remove('active');
-      pickDestinationBtn.classList.remove('active');
-    }
-
-    function openNavigationRoute() {
-      if (!navigationStart || !navigationDestination) {
-        alert('Select start and destination points first.');
-        return;
-      }
-      const start = navigationStart;
-      const end = navigationDestination;
-      const routeUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${start[0]},${start[1]};${end[0]},${end[1]}`;
-      window.open(routeUrl, '_blank', 'noopener,noreferrer');
-    }
-
-    function openContributionChoice() {
-      contributeModal.classList.remove('hidden');
-    }
-
-    function closeContributionChoice() {
-      contributeModal.classList.add('hidden');
-    }
-
-    function showAuthModal() {
-      modal.classList.remove('hidden');
-    }
-
-    function hideAuthModal() {
-      modal.classList.add('hidden');
-    }
-
-    osmLinkBtn.addEventListener('click', showAuthModal);
-    connectOsmBtn.addEventListener('click', showAuthModal);
-    closeModal.addEventListener('click', hideAuthModal);
-    cancelLink.addEventListener('click', hideAuthModal);
-    confirmLink.addEventListener('click', () => {
-      hideAuthModal();
-      alert('OpenStreetMap account linked successfully.');
-    });
-
-    animationToggle.addEventListener('click', () => {
-      const enabled = !document.body.classList.contains('animations-off');
-      setAnimationState(!enabled);
-    });
-
-    setAnimationState(true);
-
-    gpsBtn.addEventListener('click', moveToCurrentLocation);
-    zoomResetBtn.addEventListener('click', resetMapView);
-    cancelRouteBtn.addEventListener('click', cancelRouteSelection);
-
-    pickStartBtn.addEventListener('click', () => {
-      selectedPick = 'start';
-      pickStartBtn.classList.add('active');
-      pickDestinationBtn.classList.remove('active');
-    });
-
-    pickDestinationBtn.addEventListener('click', () => {
-      selectedPick = 'destination';
-      pickDestinationBtn.classList.add('active');
-      pickStartBtn.classList.remove('active');
-    });
-
-    routeBtn.addEventListener('click', openNavigationRoute);
-
-    map.on('click', (event) => {
-      if (selectedPick) {
-        handleMapPick(event.latlng);
-      }
-    });
-
-    document.querySelectorAll('.contribute-option').forEach((button) => {
-      button.addEventListener('click', () => {
-        const choice = button.dataset.editor;
-        closeContributionChoice();
-        if (choice === 'vespucci') {
-          window.open('https://vespucci.io', '_blank', 'noopener,noreferrer');
+          if (window.normalLayer) {
+            map.removeLayer(window.normalLayer);
+          }
+          if (!map.hasLayer(window.satelliteLayer)) {
+            window.satelliteLayer.addTo(map);
+          }
         } else {
-          window.open('https://openstreetmap.org/edit', '_blank', 'noopener,noreferrer');
+          if (window.satelliteLayer) {
+            map.removeLayer(window.satelliteLayer);
+          }
+          if (!window.normalLayer) {
+            window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              attribution: '&copy; OpenStreetMap contributors'
+            });
+          }
+          if (!map.hasLayer(window.normalLayer)) {
+            window.normalLayer.addTo(map);
+          }
         }
       });
-    });
 
-    document.getElementById('closeContributeModal').addEventListener('click', closeContributionChoice);
+      uiModeSelect.addEventListener('change', (event) => {
+        const value = event.target.value;
+        document.body.classList.toggle('ui-compact', value === 'compact');
+      });
 
-    mapEngineSelect.addEventListener('change', applyMapEngine);
-    uiFrameworkSelect.addEventListener('change', applyUiFramework);
-    complexitySelect.addEventListener('change', applyComplexity);
-    themeSelect.addEventListener('change', applyTheme);
+      const map = L.map('map', {
+        zoomControl: true,
+        attributionControl: true,
+        worldCopyJump: true
+      }).setView([40.7128, -74.0060], 12);
 
-    map.on('move zoom', updateTelemetry);
+      window.normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
 
-    map.on('click', (event) => {
-      if (!activeDrawTool) return;
-      drawPoints.push([event.latlng.lat, event.latlng.lng]);
-      renderDraft();
-    });
+      locateBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported on this browser.');
+          return;
+        }
 
-    map.on('dblclick', () => {
-      if (!activeDrawTool) return;
-      finalizeShape();
-    });
+        locateBtn.disabled = true;
+        locateBtn.style.opacity = '0.7';
 
-    drawButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const tool = button.dataset.tool;
-        if (tool === activeDrawTool) {
-          activateDrawTool(null);
-        } else {
-          activateDrawTool(tool);
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            map.flyTo([latitude, longitude], 15, { duration: 1.8 });
+            locateBtn.disabled = false;
+            locateBtn.style.opacity = '1';
+          },
+          () => {
+            alert('Unable to get your location right now.');
+            locateBtn.disabled = false;
+            locateBtn.style.opacity = '1';
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+
+      document.addEventListener('click', (event) => {
+        if (sidebar.classList.contains('open') && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+          sidebar.classList.remove('open');
         }
       });
-    });
-
-    const contributeBtn = document.createElement('button');
-    contributeBtn.id = 'contributeBtn';
-    contributeBtn.type = 'button';
-    contributeBtn.className = 'link-button advanced-only';
-    contributeBtn.textContent = 'Contribute/Edit';
-    contributeBtn.addEventListener('click', openContributionChoice);
-    document.querySelector('.sidebar-card:nth-of-type(3)').appendChild(contributeBtn);
-
-    applyUiFramework();
-    applyTheme();
-    applyComplexity();
-    applyMapEngine();
-    updateTelemetry();
-    updateRouteArtwork();
-    if (map.hasLayer(osmLayer)) {
-      map.addLayer(osmLayer);
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>
